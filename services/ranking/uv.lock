@@ -1408,6 +1408,12 @@ dev = [
 name = "udaan-shared"
 version = "0.0.0"
 source = { editable = "../shared" }
+dependencies = [
+    { name = "httpx" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "httpx", specifier = ">=0.27" }]
 
 [[package]]
 name = "uvicorn"
