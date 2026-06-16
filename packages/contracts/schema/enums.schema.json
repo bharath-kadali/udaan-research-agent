@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://udaan.dev/schema/enums.json",
+  "title": "Enums",
+  "$defs": {
+    "ResolutionStatus": {
+      "type": "string",
+      "enum": ["PENDING", "RESOLVED_CACHE", "RESOLVED_DOWNLOAD", "PAYWALLED", "FAILED_CORRUPTED"]
+    },
+    "ClaimClassification": {
+      "type": "string",
+      "enum": ["FINDING", "HYPOTHESIS", "LIMITATION", "METHODOLOGY"]
+    },
+    "ClusterPolarity": {
+      "type": "string",
+      "enum": ["AGREEMENT", "CONTRADICTION", "THIN_EVIDENCE", "NOISE"]
+    }
+  }
+}

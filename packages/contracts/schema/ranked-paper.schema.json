@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://udaan.dev/schema/ranked-paper.json",
+  "title": "PrioritizedIngestionIndex",
+  "description": "Phase 3 (Cross-Encoder Re-Ranking) output, consumed by Phase 4.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["projectId", "totalProcessed", "totalFiltered", "rankedManifest"],
+  "properties": {
+    "projectId": { "type": "string" },
+    "totalProcessed": { "type": "integer", "minimum": 0 },
+    "totalFiltered": { "type": "integer", "minimum": 0 },
+    "rankedManifest": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rank", "relevanceScore", "internalId", "doi", "title", "abstract", "publicationDate"],
+        "properties": {
+          "rank": { "type": "integer", "minimum": 1 },
+          "relevanceScore": { "type": "number", "minimum": 0, "maximum": 1 },
+          "internalId": { "type": "string" },
+          "doi": { "type": ["string", "null"] },
+          "title": { "type": "string" },
+          "abstract": { "type": "string" },
+          "publicationDate": { "type": "string" }
+        }
+      }
+    }
+  }
+}
