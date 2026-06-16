@@ -8,6 +8,14 @@ Crucially, this phase is designed to operate strictly within legal boundaries, r
 
 ---
 
+## Implementation Stack (finalized — see `STACK.md`)
+
+- **Language:** TypeScript (Node.js 20) — async streaming downloads.
+- **Object storage:** **MinIO** (S3-compatible) locally via docker-compose; `storagePointer` stays an `s3://` URI, so a later move to AWS S3 / GCS is an endpoint + credential config change, not a code change.
+- **Resolvers:** local cache → arXiv/PMC direct → Unpaywall (as described below).
+
+---
+
 ## 1. Architectural Overview
 
 Downloading PDFs introduces severe I/O bottlenecks, network unreliability, and security vulnerabilities (e.g., malicious files or HTML login walls masking as PDFs). If the engine attempted to download all 500 papers from Phase 2, the system would collapse under bandwidth constraints and IP bans.

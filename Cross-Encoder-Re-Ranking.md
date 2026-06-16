@@ -6,6 +6,14 @@ Phase 3 serves as the intensive validation gate. It accepts the broad deduplicat
 
 ---
 
+## Implementation Stack (finalized — see `STACK.md`)
+
+- **Language:** Python service (sentence-transformers / ONNX).
+- **Re-ranker** (behind a provider interface): local default → **`BAAI/bge-reranker-base`** (`-large` only when the GPU is otherwise idle); free API → **Cohere `rerank-v3.5`**; CPU fallback → `ms-marco-MiniLM-L-6-v2`.
+- **Hardware note:** dev GPU is **8GB VRAM** (RTX 3070 Ti Laptop). The BullMQ queue runs phases sequentially, so the re-ranker has the GPU to itself when active.
+
+---
+
 ## 1. Architectural Overview
 
 While Phase 2 maximizes recall by fetching hundreds of metadata records through broad lexical and semantic searches, it introduces substantial noise. Standard bi-encoder embeddings match topics but fail to capture strict analytical relevance, logical polarity, or granular context.
@@ -137,6 +145,8 @@ The payload emitted from Phase 3 to drive the Just-In-Time resolution loops in P
 ### 4.1. Model Architecture Selection
 
 The system utilizes a localized instance of **`BAAI/bge-reranker-large`** or a specialized alternative like **`ms-marco-MiniLM-L-6-v2`** depending on the production host execution profile.
+
+> **Finalized default (see `STACK.md`):** on the 8GB dev GPU, **`bge-reranker-base`** is the default for VRAM headroom; `bge-reranker-large` is used only when the GPU is otherwise idle. A hosted alternative (Cohere `rerank-v3.5`) sits behind the same provider interface.
 
 * **`bge-reranker-large` (Preferred for GPU):** 335 million parameters. Delivers state-of-the-art multi-lingual accuracy and excellent differentiation of academic reasoning.
 * **`ms-marco-MiniLM-L-6-v2` (Preferred CPU Fallback):** Extremely lightweight, offering high processing velocity with minimal loss in top-20 structural ranking precision.

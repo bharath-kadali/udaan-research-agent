@@ -6,6 +6,14 @@ Phase 2 is the boundary layer between the system's internal pipeline and externa
 
 ---
 
+## Implementation Stack (finalized — see `STACK.md`)
+
+- **Language:** TypeScript (Node.js 20) — concurrent API fan-out, circuit breakers, dedup.
+- **External providers:** OpenAlex, Semantic Scholar, Crossref. Endpoints/keys via env config (no hardcoded host) for deploy portability.
+- **No model** — pure I/O, normalization, and entity resolution.
+
+---
+
 ## 1. Architectural Overview
 
 External academic APIs are notoriously inconsistent. They suffer from varying latency spikes, unannounced schema changes, and overlapping datasets. Phase 2 acts as a strict, resilient buffer. It guarantees that regardless of which external provider succeeds or fails, the downstream Phase 3 (Cross-Encoder Re-Ranking) always receives a pristine, deduplicated array of paper metadata.

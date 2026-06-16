@@ -6,6 +6,13 @@ Phase 7 is the final assembly line. It takes the logical structures generated in
 
 ---
 
+## Implementation Stack (finalized — see `STACK.md`)
+
+- **Language:** TypeScript (Node.js 20) — regex citation weaving + deterministic sentence filtering.
+- **Generation LLM** (behind an LLM-provider interface; trust-critical): paid (recommended) → **Claude Opus 4.8**; free → Groq Llama 3.3 70B; local → Qwen2.5-7B (Q4). See §4.1 for the provider-dependent determinism settings.
+
+---
+
 ## 1. Architectural Overview
 
 The greatest risk to a research synthesis engine is the final generation step. If an LLM is fed a block of claims and told to "write a report," it will inevitably inject external knowledge from its training data, lose track of which paper produced which claim, and fabricate citations.
@@ -148,9 +155,12 @@ This is the ultimate deliverable served to the frontend application. The structu
 
 ## 4. Resilience & Performance Strategies
 
-### 4.1. Inference Constraints (Zero Temperature)
+### 4.1. Inference Constraints (Deterministic Generation)
 
-To ensure maximum adherence to the structural tags, the generation models are executed with `temperature = 0.0` and `top_p = 0.1`. Creativity is explicitly disabled; the engine prioritizes mechanical synthesis and precise instruction following.
+To ensure maximum adherence to the structural tags, creativity is explicitly disabled; the engine prioritizes mechanical synthesis and precise instruction following. The exact knob is **provider-dependent**:
+
+* **Local / Gemini / Groq providers:** set `temperature = 0.0` (and `top_p = 0.1`).
+* **Claude (Opus 4.8 / 4.7 / Fable 5):** `temperature` and `top_p` are not accepted and return a 400 — do not send them. Use adaptive thinking (`thinking: {type: "adaptive"}`) instead; the model is already low-variance for this mechanical, instruction-bound task.
 
 ### 4.2. Over-Generation and Pruning
 
