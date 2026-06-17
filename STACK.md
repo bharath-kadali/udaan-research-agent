@@ -180,10 +180,12 @@ Cross-service transport between the TS orchestrator and Python services is **HTT
 | Cloud provider | None (local) | designed for config-only deploy later |
 | Data stores | Qdrant + Redis (local containers) | via docker-compose |
 
-### Remaining minor items (resolve during implementation)
-- **Web API framework** for the orchestrator's HTTP/SSE surface (e.g. Fastify or NestJS).
-- **Specific embedding model** (`bge-small-en` vs `gte-small` vs other) — pick after measuring VRAM contention with the re-ranker + polarity LLM.
-- **Specific Python service framework** for the ML services' HTTP endpoints (e.g. FastAPI).
+### Resolved during implementation
+- **Web API framework:** **Fastify** (orchestrator HTTP/SSE surface).
+- **Python service framework:** **FastAPI + uvicorn** (ranking, parsing, synthesis).
+- **Embedding model:** default **`BAAI/bge-base-en-v1.5`** (768-dim), behind the `EmbeddingProvider` interface; hashing fallback when the `ml` extra is absent.
+- **PDF parsing fallback:** **pypdf** (base) with Docling as the `ml` extra.
+- **Frontend:** **React + Vite** (`packages/web`), real-time SSE progress.
 
 ---
 
