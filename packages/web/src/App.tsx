@@ -1,10 +1,11 @@
 import { useCallback, useRef, useState } from "react";
 import { Brief } from "./components/Brief.js";
+import { PaywallUploads } from "./components/PaywallUploads.js";
 import { PipelineLedger } from "./components/PipelineLedger.js";
 import { QueryConsole } from "./components/QueryConsole.js";
-import { startResearch, streamProgress } from "./api.js";
+import { getStatus, startResearch, streamProgress } from "./api.js";
 import { SAMPLE_BRIEF, SAMPLE_QUERY } from "./sample.js";
-import type { PhaseStatus, ResearchBrief } from "./types.js";
+import type { PaywalledEntry, PhaseStatus, ResearchBrief } from "./types.js";
 
 type Mode = "idle" | "running" | "done" | "rejected" | "error";
 
@@ -16,6 +17,7 @@ export function App() {
   const [statuses, setStatuses] = useState<Record<number, PhaseStatus>>(emptyStatuses);
   const [details, setDetails] = useState<Record<number, string | undefined>>({});
   const [brief, setBrief] = useState<ResearchBrief | null>(null);
+  const [paywalled, setPaywalled] = useState<PaywalledEntry[]>([]);
   const [message, setMessage] = useState("");
   const [isSample, setIsSample] = useState(false);
   const unsub = useRef<(() => void) | null>(null);
@@ -25,6 +27,7 @@ export function App() {
     setStatuses(emptyStatuses());
     setDetails({});
     setBrief(null);
+    setPaywalled([]);
     setMessage("");
     setIsSample(false);
   }, []);
@@ -44,6 +47,9 @@ export function App() {
           if ("status" in result && result.status === "ok") {
             setBrief(result.brief);
             setMode("done");
+            getStatus(jobId)
+              .then((s) => setPaywalled(s.paywalled ?? []))
+              .catch(() => undefined);
           } else if ("status" in result && result.status === "rejected") {
             setMessage(`Query rejected (${result.reason}). Try rephrasing as a research question.`);
             setMode("rejected");
@@ -137,6 +143,8 @@ export function App() {
             </button>
           </div>
         )}
+
+        {mode === "done" && paywalled.length > 0 && <PaywallUploads entries={paywalled} />}
 
         {mode === "done" && brief && <Brief brief={brief} />}
       </main>

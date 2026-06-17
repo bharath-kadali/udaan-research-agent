@@ -1,4 +1,4 @@
-import type { PipelineResult, ProgressEvent } from "./types.js";
+import type { PaywalledEntry, PipelineResult, ProgressEvent } from "./types.js";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
@@ -35,4 +35,29 @@ export function streamProgress(jobId: string, handlers: StreamHandlers): () => v
   };
 
   return () => source.close();
+}
+
+export interface JobStatus {
+  done: boolean;
+  projectId: string;
+  paywalled: PaywalledEntry[];
+}
+
+export async function getStatus(jobId: string): Promise<JobStatus> {
+  const res = await fetch(`${API_BASE}/research/${jobId}`);
+  if (!res.ok) throw new Error(`Status ${res.status}`);
+  return res.json();
+}
+
+export async function uploadPdf(input: {
+  doi: string | null;
+  internalId: string;
+  pdfBase64: string;
+}): Promise<void> {
+  const res = await fetch(`${API_BASE}/uploads`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error(`Upload failed (${res.status})`);
 }

@@ -1,6 +1,7 @@
-import type { ResearchBrief } from "@udaan/contracts";
+import type { ResearchBrief, ResolutionManifestEntry } from "@udaan/contracts";
 
 export type { ResearchBrief };
+export type PaywalledEntry = ResolutionManifestEntry;
 
 /** The fixed 7-phase sequence, in order. Names match the orchestrator's emits. */
 export const PHASES: { phase: number; name: string }[] = [
