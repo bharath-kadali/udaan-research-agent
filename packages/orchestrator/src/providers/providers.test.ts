@@ -131,18 +131,32 @@ describe("GroqLLMProvider", () => {
 describe("AnthropicLLMProvider", () => {
   let provider: AnthropicLLMProvider;
   let mockCreate: ReturnType<typeof vi.fn>;
+    
+  // beforeEach(async () => {
+  //   // Mock the @anthropic-ai/sdk module before constructing the provider.
+  //   mockCreate = vi.fn();
+    // vi.mock("@anthropic-ai/sdk", () => ({
+    //   default: vi.fn().mockImplementation(() => ({
+    //     messages: { create: mockCreate },
+    //   })),
+    // }));
+  //   const { AnthropicLLMProvider: A } = await import("./anthropic.js");
+  //   provider = new A({ apiKey: "test-key", model: "claude-opus-4-8" });
+  // });
+      beforeEach(() => {
+  mockCreate = vi.fn();
 
-  beforeEach(async () => {
-    // Mock the @anthropic-ai/sdk module before constructing the provider.
-    mockCreate = vi.fn();
-    vi.mock("@anthropic-ai/sdk", () => ({
-      default: vi.fn().mockImplementation(() => ({
-        messages: { create: mockCreate },
-      })),
-    }));
-    const { AnthropicLLMProvider: A } = await import("./anthropic.js");
-    provider = new A({ apiKey: "test-key", model: "claude-opus-4-8" });
-  });
+  const fakeClient = {
+    messages: {
+      create: mockCreate,
+    },
+  };
+
+  provider = new AnthropicLLMProvider(
+    { apiKey: "test-key", model: "claude-opus-4-8" },
+    fakeClient as any,
+  );
+});
 
   it("returns joined text blocks", async () => {
     mockCreate.mockResolvedValue({

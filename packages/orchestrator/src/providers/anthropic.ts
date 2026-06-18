@@ -16,8 +16,14 @@ import { registerLLMProvider, type LLMCompleteOptions, type LLMMessage, type LLM
 export class AnthropicLLMProvider implements LLMProvider {
   private readonly client: Anthropic;
 
-  constructor(private readonly opts: { apiKey: string; model: string }) {
-    this.client = new Anthropic({ apiKey: opts.apiKey });
+  constructor(private readonly opts: { apiKey: string; model: string },
+    client?: Anthropic,
+  ) {
+    this.client =
+      client ??
+      new Anthropic({
+        apiKey: opts.apiKey,
+      });
   }
 
   async complete(messages: LLMMessage[], options?: LLMCompleteOptions): Promise<string> {

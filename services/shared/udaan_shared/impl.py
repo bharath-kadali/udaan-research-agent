@@ -246,7 +246,7 @@ class CohereEmbeddingProvider:
             raise ValueError(
                 "COHERE_API_KEY is not set. It is required when EMBEDDING_PROVIDER=cohere."
             )
-        self._model = "embed-v3"
+        self._model = "embed-english-v3.0"
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         resp = httpx.post(

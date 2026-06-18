@@ -18,7 +18,7 @@ import pytest
 def _cfg(**api_keys) -> MagicMock:
     cfg = MagicMock()
     cfg.llm_model = "test-model"
-    cfg.embedding_model = "embed-v3"
+    cfg.embedding_model = "embed-english-v3.0"
     cfg.api_keys = {
         "gemini": None,
         "groq": None,
@@ -255,5 +255,5 @@ class TestCohereEmbeddingProvider:
         self._provider().embed(["test"])
         request = httpx_mock.get_requests()[0]
         body = json.loads(request.content)
-        assert body["model"] == "embed-v3"
+        assert body["model"] == "embed-english-v3.0"
         assert body["input_type"] == "search_document"
