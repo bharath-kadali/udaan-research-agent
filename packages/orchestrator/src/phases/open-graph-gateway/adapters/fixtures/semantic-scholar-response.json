@@ -1,0 +1,13 @@
+{
+  "data": [
+    {
+      "title": "Semantic Scholar Example Study",
+      "abstract": "An example abstract from Semantic Scholar with sufficient length to pass the minimum abstract constraint enforced by the CandidatePaper contract schema.",
+      "year": 2021,
+      "citationCount": 88,
+      "externalIds": { "DOI": "10.9999/ss-paper" },
+      "authors": [{ "name": "B. Author" }],
+      "url": "https://www.semanticscholar.org/paper/example"
+    }
+  ]
+}

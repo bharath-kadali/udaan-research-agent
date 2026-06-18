@@ -1,0 +1,29 @@
+{
+  "results": [
+    {
+      "id": "https://openalex.org/W123",
+      "doi": "https://doi.org/10.1234/example",
+      "display_name": "Graph Neural Networks for Drug Discovery",
+      "abstract_inverted_index": {
+        "Graph": [0],
+        "neural": [1],
+        "networks": [2],
+        "enable": [3],
+        "novel": [4],
+        "molecular": [5],
+        "representations": [6],
+        "for": [7],
+        "drug": [8],
+        "discovery": [9],
+        "pipelines": [10],
+        "with": [11],
+        "strong": [12],
+        "benchmark": [13],
+        "performance": [14]
+      },
+      "authorships": [{ "author": { "display_name": "A. Researcher" } }],
+      "publication_date": "2023-06-15",
+      "cited_by_count": 42
+    }
+  ]
+}

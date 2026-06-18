@@ -1,0 +1,15 @@
+{
+  "message": {
+    "items": [
+      {
+        "DOI": "10.5678/sample",
+        "title": ["Crossref Sample Paper on Machine Learning"],
+        "abstract": "<jats:p>This is a representative Crossref abstract with enough words to satisfy downstream validation requirements for candidate papers in the pipeline.</jats:p>",
+        "author": [{ "family": "Smith", "given": "Jane" }],
+        "published": { "date-parts": [[2022, 3, 10]] },
+        "is-referenced-by-count": 17,
+        "URL": "https://doi.org/10.5678/sample"
+      }
+    ]
+  }
+}
