@@ -81,3 +81,80 @@ export interface PrioritizedIngestionIndex {
   totalFiltered: number;
   rankedManifest: RankedPaper[];
 }
+
+// --- Phase 4: ResolutionManifest ---
+export interface ResolutionManifestEntry {
+  internalId: string;
+  doi: string | null;
+  status: ResolutionStatus;
+  storagePointer: string | null;
+  metadataSnapshot: { title: string };
+}
+
+export interface ResolutionManifest {
+  projectId: string;
+  resolutionSummary: {
+    totalRequested: number;
+    successfullyResolved: number;
+    paywalled: number;
+  };
+  manifest: ResolutionManifestEntry[];
+}
+
+// --- Phase 5: ValidatedClaim ---
+export interface ClaimLineage {
+  section: string;
+  subSection?: string | null;
+  pageNumber: number;
+  structuralNodeType: string;
+}
+
+export interface ValidatedClaim {
+  claimId: string;
+  projectId: string;
+  documentDoi: string | null;
+  claimClassification: ClaimClassification;
+  claimText: string;
+  /** Exact, unmodified substring of the source chunk. */
+  sourceQuote: string;
+  lineage: ClaimLineage;
+  vectorEmbedding?: number[] | null;
+}
+
+// --- Phase 6: SynthesisGraph ---
+export interface SynthesisClaimRef {
+  claimId: string;
+  doi: string | null;
+  text: string;
+}
+
+export interface SynthesisCluster {
+  clusterId: string;
+  generatedTopicLabel: string;
+  polarity: ClusterPolarity;
+  claims: SynthesisClaimRef[];
+}
+
+export interface SynthesisGraph {
+  projectId: string;
+  synthesisGraph: SynthesisCluster[];
+}
+
+// --- Phase 7: ResearchBrief ---
+export interface BibliographyEntry {
+  claimId: string;
+  doi: string | null;
+  text: string;
+}
+
+export interface BriefSection {
+  heading: string;
+  bodyText: string;
+}
+
+export interface ResearchBrief {
+  projectId: string;
+  metadata: { totalClaims: number; sectionsGenerated: number };
+  sections: BriefSection[];
+  bibliography: Record<string, BibliographyEntry>;
+}

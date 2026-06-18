@@ -1,0 +1,32 @@
+[project]
+name = "udaan-ranking"
+version = "0.0.0"
+description = "Phase 3 — Cross-Encoder Re-Ranking service."
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+  "pydantic>=2.7",
+  "udaan-contracts",
+  "udaan-shared",
+]
+
+# Heavy ML stack is OPTIONAL. Without it the service runs the deterministic
+# lexical fallback; install to enable the GPU cross-encoder:
+#   uv sync --extra ml
+[project.optional-dependencies]
+ml = ["sentence-transformers>=3.0", "torch>=2.2"]
+
+[dependency-groups]
+dev = ["pytest>=8", "httpx>=0.27"]
+
+[tool.uv.sources]
+udaan-contracts = { path = "../../packages/contracts/python", editable = true }
+udaan-shared = { path = "../shared", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["udaan_ranking"]

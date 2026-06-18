@@ -1,0 +1,33 @@
+[project]
+name = "udaan-synthesis"
+version = "0.0.0"
+description = "Phase 6 — Cross-Source Synthesis & Polarity Detection service."
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+  "pydantic>=2.7",
+  "udaan-contracts",
+  "udaan-shared",
+]
+
+# Base install uses pure-Python greedy cosine clustering + in-memory source.
+# Optional extras enable Agglomerative/HDBSCAN clustering and Qdrant fetch:
+#   uv sync --extra ml --extra qdrant
+[project.optional-dependencies]
+ml = ["scikit-learn>=1.4", "numpy>=1.26"]
+qdrant = ["qdrant-client>=1.10"]
+
+[dependency-groups]
+dev = ["pytest>=8", "httpx>=0.27"]
+
+[tool.uv.sources]
+udaan-contracts = { path = "../../packages/contracts/python", editable = true }
+udaan-shared = { path = "../shared", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["udaan_synthesis"]

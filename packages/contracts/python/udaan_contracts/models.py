@@ -101,3 +101,90 @@ class PrioritizedIngestionIndex(_Base):
     total_processed: int = Field(alias="totalProcessed", ge=0)
     total_filtered: int = Field(alias="totalFiltered", ge=0)
     ranked_manifest: list[RankedPaper] = Field(alias="rankedManifest")
+
+
+# --- Phase 4: ResolutionManifest ---
+class MetadataSnapshot(_Base):
+    title: str
+
+
+class ResolutionSummary(_Base):
+    total_requested: int = Field(alias="totalRequested", ge=0)
+    successfully_resolved: int = Field(alias="successfullyResolved", ge=0)
+    paywalled: int = Field(ge=0)
+
+
+class ResolutionManifestEntry(_Base):
+    internal_id: str = Field(alias="internalId")
+    doi: str | None
+    status: ResolutionStatus
+    storage_pointer: str | None = Field(alias="storagePointer")
+    metadata_snapshot: MetadataSnapshot = Field(alias="metadataSnapshot")
+
+
+class ResolutionManifest(_Base):
+    project_id: str = Field(alias="projectId")
+    resolution_summary: ResolutionSummary = Field(alias="resolutionSummary")
+    manifest: list[ResolutionManifestEntry]
+
+
+# --- Phase 5: ValidatedClaim ---
+class ClaimLineage(_Base):
+    section: str
+    sub_section: str | None = Field(default=None, alias="subSection")
+    page_number: int = Field(alias="pageNumber", ge=0)
+    structural_node_type: str = Field(alias="structuralNodeType")
+
+
+class ValidatedClaim(_Base):
+    claim_id: str = Field(alias="claimId")
+    project_id: str = Field(alias="projectId")
+    document_doi: str | None = Field(alias="documentDoi")
+    claim_classification: ClaimClassification = Field(alias="claimClassification")
+    claim_text: str = Field(alias="claimText")
+    source_quote: str = Field(alias="sourceQuote")
+    lineage: ClaimLineage
+    vector_embedding: list[float] | None = Field(default=None, alias="vectorEmbedding")
+
+
+# --- Phase 6: SynthesisGraph ---
+class SynthesisClaimRef(_Base):
+    claim_id: str = Field(alias="claimId")
+    doi: str | None
+    text: str
+
+
+class SynthesisCluster(_Base):
+    cluster_id: str = Field(alias="clusterId")
+    generated_topic_label: str = Field(alias="generatedTopicLabel")
+    polarity: ClusterPolarity
+    claims: list[SynthesisClaimRef]
+
+
+class SynthesisGraph(_Base):
+    project_id: str = Field(alias="projectId")
+    synthesis_graph: list[SynthesisCluster] = Field(alias="synthesisGraph")
+
+
+# --- Phase 7: ResearchBrief ---
+class BibliographyEntry(_Base):
+    claim_id: str = Field(alias="claimId")
+    doi: str | None
+    text: str
+
+
+class BriefSection(_Base):
+    heading: str
+    body_text: str = Field(alias="bodyText")
+
+
+class BriefMetadata(_Base):
+    total_claims: int = Field(alias="totalClaims", ge=0)
+    sections_generated: int = Field(alias="sectionsGenerated", ge=0)
+
+
+class ResearchBrief(_Base):
+    project_id: str = Field(alias="projectId")
+    metadata: BriefMetadata
+    sections: list[BriefSection]
+    bibliography: dict[str, BibliographyEntry]
