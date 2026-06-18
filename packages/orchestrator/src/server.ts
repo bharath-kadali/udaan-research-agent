@@ -1,15 +1,14 @@
 /**
  * Thin HTTP API for the orchestrator. Runs the pipeline in-process and streams
- * per-phase progress over SSE. Paywalled papers are surfaced for manual upload
- * to the vault (so a re-run resolves them from cache). (BullMQ is the
- * horizontal-scale path: runPipeline is the worker body.)
+ * per-phase progress over SSE. Non-health routes require an API key when
+ * ORCHESTRATOR_API_KEY is configured. Completed jobs are evicted after TTL.
  */
 
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import type { ResolutionManifestEntry } from "@udaan/contracts";
-import Fastify, { type FastifyInstance } from "fastify";
-import { loadConfig } from "@udaan/shared";
+import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
+import { loadConfig, type OrchestratorApiConfig } from "@udaan/shared";
 import { S3ObjectStore, storageKey, type ObjectStore } from "./phases/full-text-resolution/index.js";
 import { buildPipelineDeps } from "./pipeline/index.js";
 import { runPipeline, type PipelineResult, type ProgressEvent } from "./pipeline/runPipeline.js";
@@ -21,34 +20,87 @@ interface Job {
   result?: PipelineResult;
   error?: string;
   done: boolean;
+  completedAt?: number;
 }
 
 export interface ServerOptions {
-  /** Inject an object store (tests/no-infra); defaults to S3/MinIO from config. */
   store?: ObjectStore;
+  /** Override orchestrator API settings (tests). Pass apiKey: null to disable auth. */
+  orchestrator?: Partial<OrchestratorApiConfig> & { apiKey?: string | null };
+}
+
+function resolveApiKey(
+  configured: OrchestratorApiConfig,
+  override?: Partial<OrchestratorApiConfig> & { apiKey?: string | null },
+): string | undefined {
+  if (override && "apiKey" in override) {
+    return override.apiKey ?? undefined;
+  }
+  return configured.apiKey;
+}
+
+function extractBearerToken(authHeader: string | undefined): string | undefined {
+  if (!authHeader?.startsWith("Bearer ")) return undefined;
+  const token = authHeader.slice("Bearer ".length).trim();
+  return token.length > 0 ? token : undefined;
+}
+
+function isAuthorized(req: FastifyRequest, apiKey: string | undefined): boolean {
+  if (!apiKey) return true;
+  const headerKey = req.headers["x-api-key"];
+  const fromHeader = typeof headerKey === "string" ? headerKey : undefined;
+  const fromBearer = extractBearerToken(req.headers.authorization);
+  return fromHeader === apiKey || fromBearer === apiKey;
 }
 
 export function buildServer(options: ServerOptions = {}): FastifyInstance {
-  // Strict boundary validation: don't silently coerce types or strip unknown
-  // fields — a malformed request body is rejected with a 400, not patched up.
+  const config = loadConfig();
+  const apiConfig: OrchestratorApiConfig = { ...config.orchestrator, ...options.orchestrator };
+  const apiKey = resolveApiKey(config.orchestrator, options.orchestrator);
+
   const app = Fastify({
     logger: false,
+    bodyLimit: apiConfig.maxBodyBytes,
     ajv: { customOptions: { coerceTypes: false, removeAdditional: false } },
   });
   const jobs = new Map<string, Job>();
 
   let store = options.store ?? null;
   const getStore = (): ObjectStore => {
-    if (!store) store = new S3ObjectStore(loadConfig().s3);
+    if (!store) store = new S3ObjectStore(config.s3);
     return store;
   };
 
+  function evictExpiredJobs(): void {
+    const cutoff = Date.now() - apiConfig.jobTtlMs;
+    for (const [id, job] of jobs) {
+      if (job.done && job.completedAt !== undefined && job.completedAt < cutoff) {
+        jobs.delete(id);
+      }
+    }
+  }
+
+  function inFlightCount(): number {
+    let n = 0;
+    for (const job of jobs.values()) {
+      if (!job.done) n++;
+    }
+    return n;
+  }
+
+  app.addHook("onRequest", async (req, reply) => {
+    if (req.url === "/health" || req.url.startsWith("/health?")) return;
+    if (!isAuthorized(req, apiKey)) {
+      reply.code(401).send({ error: "unauthorized" });
+    }
+  });
+
   function startJob(query: string, projectId: string, userId: string): string {
+    evictExpiredJobs();
     const id = randomUUID();
     const job: Job = { projectId, events: [], paywalled: [], done: false };
     jobs.set(id, job);
 
-    const config = loadConfig();
     const deps = buildPipelineDeps(config, {
       onProgress: (event) => job.events.push(event),
       onPaywalled: (entries) => {
@@ -66,6 +118,7 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
       })
       .finally(() => {
         job.done = true;
+        job.completedAt = Date.now();
       });
 
     return id;
@@ -73,9 +126,6 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
 
   app.get("/health", async () => ({ status: "ok" }));
 
-  // Runtime request-body validation at the API boundary (issue #20). Fastify
-  // rejects a body that violates the schema with a descriptive 400 before the
-  // handler runs, so a malformed client request never enters the pipeline.
   const researchBodySchema = {
     type: "object",
     additionalProperties: false,
@@ -91,6 +141,9 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     "/research",
     { schema: { body: researchBodySchema } },
     async (req, reply) => {
+      if (inFlightCount() >= apiConfig.maxConcurrentJobs) {
+        return reply.code(429).send({ error: "too many in-flight jobs" });
+      }
       const { query, projectId = `proj_${randomUUID().slice(0, 8)}`, userId = "anonymous" } = req.body ?? {};
       const jobId = startJob(query, projectId, userId);
       return reply.code(202).send({ jobId, projectId });
@@ -140,8 +193,6 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     req.raw.on("close", () => clearInterval(timer));
   });
 
-  // Manual upload for a paywalled paper: store the PDF in the vault keyed by
-  // (doi, internalId) so a re-run resolves it from cache (Track A).
   const uploadBodySchema = {
     type: "object",
     additionalProperties: false,
@@ -158,7 +209,14 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     { schema: { body: uploadBodySchema } },
     async (req, reply) => {
       const { doi = null, internalId, pdfBase64 } = req.body ?? {};
+      const approxBytes = Math.floor((pdfBase64.length * 3) / 4);
+      if (approxBytes > apiConfig.maxUploadBytes) {
+        return reply.code(413).send({ error: "upload too large" });
+      }
       const bytes = new Uint8Array(Buffer.from(pdfBase64, "base64"));
+      if (bytes.length > apiConfig.maxUploadBytes) {
+        return reply.code(413).send({ error: "upload too large" });
+      }
       if (bytes.length < 5 || !(bytes[0] === 0x25 && bytes[1] === 0x50)) {
         return reply.code(415).send({ error: "not a PDF" });
       }
@@ -166,6 +224,9 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
       return { stored: true, pointer };
     },
   );
+
+  /** Test helper: inspect/evict the in-memory job store. */
+  app.decorate("jobStoreSize", () => jobs.size);
 
   return app;
 }

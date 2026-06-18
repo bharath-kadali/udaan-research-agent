@@ -15,10 +15,21 @@ export interface S3Config {
   region: string;
 }
 
+export interface OrchestratorApiConfig {
+  /** When set, all non-health routes require Authorization: Bearer <key> or x-api-key. */
+  apiKey?: string;
+  maxBodyBytes: number;
+  maxUploadBytes: number;
+  maxConcurrentJobs: number;
+  /** Evict completed jobs from the in-memory store after this many ms. */
+  jobTtlMs: number;
+}
+
 export interface Config {
   qdrantUrl: string;
   redisUrl: string;
   s3: S3Config;
+  orchestrator: OrchestratorApiConfig;
   providers: {
     llm: LLMProviderName;
     embedding: EmbeddingProviderName;
@@ -53,6 +64,15 @@ function parseEnum<T extends string>(name: string, value: string, allowed: reado
   throw new Error(`Invalid ${name}=${value}. Allowed: ${allowed.join(", ")}`);
 }
 
+function parsePositiveInt(name: string, raw: string | undefined, fallback: number): number {
+  if (raw === undefined || raw === "") return fallback;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n <= 0) {
+    throw new Error(`Invalid ${name}=${raw}: must be a positive integer`);
+  }
+  return n;
+}
+
 export function loadConfig(): Config {
   return {
     qdrantUrl: required("QDRANT_URL"),
@@ -63,6 +83,17 @@ export function loadConfig(): Config {
       accessKey: required("S3_ACCESS_KEY"),
       secretKey: required("S3_SECRET_KEY"),
       region: optional("S3_REGION") ?? "us-east-1",
+    },
+    orchestrator: {
+      apiKey: optional("ORCHESTRATOR_API_KEY"),
+      maxBodyBytes: parsePositiveInt("ORCHESTRATOR_MAX_BODY_BYTES", optional("ORCHESTRATOR_MAX_BODY_BYTES"), 1_048_576),
+      maxUploadBytes: parsePositiveInt("ORCHESTRATOR_MAX_UPLOAD_BYTES", optional("ORCHESTRATOR_MAX_UPLOAD_BYTES"), 25_000_000),
+      maxConcurrentJobs: parsePositiveInt(
+        "ORCHESTRATOR_MAX_CONCURRENT_JOBS",
+        optional("ORCHESTRATOR_MAX_CONCURRENT_JOBS"),
+        4,
+      ),
+      jobTtlMs: parsePositiveInt("ORCHESTRATOR_JOB_TTL_MS", optional("ORCHESTRATOR_JOB_TTL_MS"), 3_600_000),
     },
     providers: {
       llm: parseEnum("LLM_PROVIDER", optional("LLM_PROVIDER") ?? "ollama", LLM_PROVIDERS),
