@@ -3,7 +3,7 @@ name = "udaan-shared"
 version = "0.0.0"
 description = "Shared config loader and provider interfaces for the Udaan Python services."
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["httpx>=0.27"]
 
 [build-system]
 requires = ["hatchling"]
