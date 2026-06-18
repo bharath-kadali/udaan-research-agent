@@ -1,20 +1,30 @@
 /**
- * Thin HTTP API for the orchestrator. Runs the pipeline in-process and streams
- * per-phase progress over SSE. Paywalled papers are surfaced for manual upload
- * to the vault (so a re-run resolves them from cache). (BullMQ is the
- * horizontal-scale path: runPipeline is the worker body.)
+ * Thin HTTP API for the orchestrator. Enqueues research jobs on BullMQ by default
+ * and streams per-phase progress over SSE via QueueEvents. Paywalled papers are
+ * surfaced for manual upload to the vault. Set PIPELINE_MODE=inprocess to run
+ * inline without Redis (local dev fallback only).
  */
 
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import type { ResolutionManifestEntry } from "@udaan/contracts";
+import { QueueEvents, type Queue } from "bullmq";
 import Fastify, { type FastifyInstance } from "fastify";
 import { loadConfig } from "@udaan/shared";
 import { S3ObjectStore, storageKey, type ObjectStore } from "./phases/full-text-resolution/index.js";
 import { buildPipelineDeps } from "./pipeline/index.js";
+import {
+  createResearchQueue,
+  enqueueResearch,
+  connection,
+  RESEARCH_QUEUE,
+  type ResearchJobResult,
+} from "./pipeline/queue.js";
 import { runPipeline, type PipelineResult, type ProgressEvent } from "./pipeline/runPipeline.js";
 
-interface Job {
+type PipelineMode = "queue" | "inprocess";
+
+interface InProcessJob {
   projectId: string;
   events: ProgressEvent[];
   paywalled: ResolutionManifestEntry[];
@@ -26,29 +36,109 @@ interface Job {
 export interface ServerOptions {
   /** Inject an object store (tests/no-infra); defaults to S3/MinIO from config. */
   store?: ObjectStore;
+  /** Inject a queue (tests); created from config when omitted in queue mode. */
+  queue?: Queue;
+  /** Override pipeline execution mode. Default: queue unless PIPELINE_MODE=inprocess. */
+  pipelineMode?: PipelineMode;
+}
+
+function resolvePipelineMode(override?: PipelineMode): PipelineMode {
+  if (override) return override;
+  return process.env.PIPELINE_MODE === "inprocess" ? "inprocess" : "queue";
+}
+
+function parseProgressPayload(data: unknown): ProgressEvent | null {
+  if (!data || typeof data !== "object") return null;
+  const payload = data as { kind?: string; event?: ProgressEvent };
+  if (payload.kind === "phase" && payload.event) return payload.event;
+  // Back-compat: worker may emit a bare ProgressEvent.
+  if ("phase" in payload && "name" in payload && "status" in payload) {
+    return payload as ProgressEvent;
+  }
+  return null;
+}
+
+function parsePaywalledPayload(data: unknown): ResolutionManifestEntry[] | null {
+  if (!data || typeof data !== "object") return null;
+  const payload = data as { kind?: string; entries?: ResolutionManifestEntry[] };
+  if (payload.kind === "paywalled" && Array.isArray(payload.entries)) return payload.entries;
+  return null;
 }
 
 export function buildServer(options: ServerOptions = {}): FastifyInstance {
-  // Strict boundary validation: don't silently coerce types or strip unknown
-  // fields — a malformed request body is rejected with a 400, not patched up.
   const app = Fastify({
     logger: false,
     ajv: { customOptions: { coerceTypes: false, removeAdditional: false } },
   });
-  const jobs = new Map<string, Job>();
+
+  const config = loadConfig();
+  const mode = resolvePipelineMode(options.pipelineMode);
+  const inProcessJobs = new Map<string, InProcessJob>();
 
   let store = options.store ?? null;
   const getStore = (): ObjectStore => {
-    if (!store) store = new S3ObjectStore(loadConfig().s3);
+    if (!store) store = new S3ObjectStore(config.s3);
     return store;
   };
 
-  function startJob(query: string, projectId: string, userId: string): string {
-    const id = randomUUID();
-    const job: Job = { projectId, events: [], paywalled: [], done: false };
-    jobs.set(id, job);
+  let queue = options.queue ?? null;
+  const getQueue = (): Queue => {
+    if (!queue) queue = createResearchQueue(config.redisUrl);
+    return queue;
+  };
 
-    const config = loadConfig();
+  async function readQueueJob(jobId: string): Promise<{
+    done: boolean;
+    projectId?: string;
+    events: ProgressEvent[];
+    paywalled: ResolutionManifestEntry[];
+    result?: PipelineResult;
+    error?: string;
+  } | null> {
+    const job = await getQueue().getJob(jobId);
+    if (!job) return null;
+
+    const events: ProgressEvent[] = [];
+    let paywalled: ResolutionManifestEntry[] = [];
+    const progressLog = Array.isArray(job.progress) ? job.progress : job.progress ? [job.progress] : [];
+    for (const entry of progressLog) {
+      const phase = parseProgressPayload(entry);
+      if (phase) events.push(phase);
+      const pw = parsePaywalledPayload(entry);
+      if (pw) paywalled = pw;
+    }
+
+    const state = await job.getState();
+    const done = state === "completed" || state === "failed";
+    const returnValue = job.returnvalue as ResearchJobResult | PipelineResult | undefined;
+
+    if (returnValue && "pipeline" in returnValue) {
+      paywalled = returnValue.paywalled.length > 0 ? returnValue.paywalled : paywalled;
+      return {
+        done,
+        projectId: job.data.projectId,
+        events,
+        paywalled,
+        result: returnValue.pipeline,
+        error: state === "failed" ? job.failedReason : undefined,
+      };
+    }
+
+    return {
+      done,
+      projectId: job.data.projectId,
+      events,
+      paywalled,
+      result: returnValue as PipelineResult | undefined,
+      error: state === "failed" ? job.failedReason : undefined,
+    };
+  }
+
+  function startInProcessJob(query: string, projectId: string, userId: string): string {
+    const id = randomUUID();
+    const job: InProcessJob = { projectId, events: [], paywalled: [], done: false };
+    inProcessJobs.set(id, job);
+
     const deps = buildPipelineDeps(config, {
       onProgress: (event) => job.events.push(event),
       onPaywalled: (entries) => {
@@ -71,11 +161,8 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     return id;
   }
 
-  app.get("/health", async () => ({ status: "ok" }));
+  app.get("/health", async () => ({ status: "ok", pipelineMode: mode }));
 
-  // Runtime request-body validation at the API boundary (issue #20). Fastify
-  // rejects a body that violates the schema with a descriptive 400 before the
-  // handler runs, so a malformed client request never enters the pipeline.
   const researchBodySchema = {
     type: "object",
     additionalProperties: false,
@@ -92,30 +179,77 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     { schema: { body: researchBodySchema } },
     async (req, reply) => {
       const { query, projectId = `proj_${randomUUID().slice(0, 8)}`, userId = "anonymous" } = req.body ?? {};
-      const jobId = startJob(query, projectId, userId);
-      return reply.code(202).send({ jobId, projectId });
+      const request = { userId, projectId, rawQuery: query, timestamp: new Date().toISOString() };
+
+      if (mode === "inprocess") {
+        const jobId = startInProcessJob(query, projectId, userId);
+        return reply.code(202).send({ jobId, projectId, pipelineMode: mode });
+      }
+
+      const bullJob = await enqueueResearch(getQueue(), request);
+      return reply.code(202).send({ jobId: bullJob.id, projectId, pipelineMode: mode });
     },
   );
 
   app.get<{ Params: { id: string } }>("/research/:id", async (req, reply) => {
-    const job = jobs.get(req.params.id);
+    if (mode === "inprocess") {
+      const job = inProcessJobs.get(req.params.id);
+      if (!job) return reply.code(404).send({ error: "not found" });
+      return {
+        done: job.done,
+        projectId: job.projectId,
+        events: job.events,
+        paywalled: job.paywalled,
+        result: job.result,
+        error: job.error,
+        pipelineMode: mode,
+      };
+    }
+
+    const job = await readQueueJob(req.params.id);
     if (!job) return reply.code(404).send({ error: "not found" });
-    return {
-      done: job.done,
-      projectId: job.projectId,
-      events: job.events,
-      paywalled: job.paywalled,
-      result: job.result,
-      error: job.error,
-    };
+    return { ...job, pipelineMode: mode };
   });
 
-  app.get<{ Params: { id: string } }>("/research/:id/stream", (req, reply) => {
-    const job = jobs.get(req.params.id);
-    if (!job) {
+  app.get<{ Params: { id: string } }>("/research/:id/stream", async (req, reply) => {
+    if (mode === "inprocess") {
+      const job = inProcessJobs.get(req.params.id);
+      if (!job) {
+        reply.code(404).send({ error: "not found" });
+        return;
+      }
+      reply.hijack();
+      const raw = reply.raw;
+      raw.writeHead(200, {
+        "content-type": "text/event-stream",
+        "cache-control": "no-cache",
+        connection: "keep-alive",
+      });
+
+      let sent = 0;
+      const timer = setInterval(() => {
+        while (sent < job.events.length) {
+          raw.write(`event: progress\ndata: ${JSON.stringify(job.events[sent])}\n\n`);
+          sent++;
+        }
+        if (job.done) {
+          raw.write(`event: result\ndata: ${JSON.stringify(job.result ?? { error: job.error })}\n\n`);
+          clearInterval(timer);
+          raw.end();
+        }
+      }, 200);
+
+      req.raw.on("close", () => clearInterval(timer));
+      return;
+    }
+
+    const jobId = req.params.id;
+    const existing = await getQueue().getJob(jobId);
+    if (!existing) {
       reply.code(404).send({ error: "not found" });
       return;
     }
+
     reply.hijack();
     const raw = reply.raw;
     raw.writeHead(200, {
@@ -124,24 +258,62 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
       connection: "keep-alive",
     });
 
-    let sent = 0;
-    const timer = setInterval(() => {
-      while (sent < job.events.length) {
-        raw.write(`event: progress\ndata: ${JSON.stringify(job.events[sent])}\n\n`);
-        sent++;
-      }
-      if (job.done) {
-        raw.write(`event: result\ndata: ${JSON.stringify(job.result ?? { error: job.error })}\n\n`);
-        clearInterval(timer);
-        raw.end();
-      }
-    }, 200);
+    const sentPhases = new Set<string>();
+    let finished = false;
 
-    req.raw.on("close", () => clearInterval(timer));
+    const queueEvents = new QueueEvents(RESEARCH_QUEUE, {
+      connection: connection(config.redisUrl),
+    });
+
+    const finish = (payload: unknown) => {
+      if (finished) return;
+      finished = true;
+      raw.write(`event: result\ndata: ${JSON.stringify(payload)}\n\n`);
+      clearInterval(poll);
+      void queueEvents.close();
+      raw.end();
+    };
+
+    queueEvents.on("progress", ({ jobId: id, data }) => {
+      if (id !== jobId) return;
+      const phase = parseProgressPayload(data);
+      if (phase) {
+        const key = `${phase.phase}:${phase.status}:${phase.detail ?? ""}`;
+        if (!sentPhases.has(key)) {
+          sentPhases.add(key);
+          raw.write(`event: progress\ndata: ${JSON.stringify(phase)}\n\n`);
+        }
+      }
+      const paywalled = parsePaywalledPayload(data);
+      if (paywalled && paywalled.length > 0) {
+        raw.write(`event: paywalled\ndata: ${JSON.stringify(paywalled)}\n\n`);
+      }
+    });
+
+    const poll = setInterval(async () => {
+      const snapshot = await readQueueJob(jobId);
+      if (!snapshot) return;
+      for (const event of snapshot.events) {
+        const key = `${event.phase}:${event.status}:${event.detail ?? ""}`;
+        if (!sentPhases.has(key)) {
+          sentPhases.add(key);
+          raw.write(`event: progress\ndata: ${JSON.stringify(event)}\n\n`);
+        }
+      }
+      if (snapshot.paywalled.length > 0) {
+        raw.write(`event: paywalled\ndata: ${JSON.stringify(snapshot.paywalled)}\n\n`);
+      }
+      if (snapshot.done) {
+        finish(snapshot.result ?? { error: snapshot.error });
+      }
+    }, 500);
+
+    req.raw.on("close", () => {
+      clearInterval(poll);
+      void queueEvents.close();
+    });
   });
 
-  // Manual upload for a paywalled paper: store the PDF in the vault keyed by
-  // (doi, internalId) so a re-run resolves it from cache (Track A).
   const uploadBodySchema = {
     type: "object",
     additionalProperties: false,

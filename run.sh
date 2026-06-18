@@ -55,9 +55,10 @@ echo "→ Starting Python services"
 (cd services/parsing   && uv run python -m udaan_parsing)   >"$LOG_DIR/parsing.log"   2>&1 & PIDS+=($!)
 (cd services/synthesis && uv run python -m udaan_synthesis) >"$LOG_DIR/synthesis.log" 2>&1 & PIDS+=($!)
 
-# --- 5. Orchestrator API + Web UI -------------------------------------------
-echo "→ Starting orchestrator API + web UI"
+# --- 5. Orchestrator API + worker + Web UI ----------------------------------
+echo "→ Starting orchestrator API, research worker, and web UI"
 pnpm --filter @udaan/orchestrator dev >"$LOG_DIR/orchestrator.log" 2>&1 & PIDS+=($!)
+pnpm --filter @udaan/orchestrator worker >"$LOG_DIR/worker.log" 2>&1 & PIDS+=($!)
 pnpm --filter @udaan/web dev           >"$LOG_DIR/web.log"          2>&1 & PIDS+=($!)
 
 cat <<EOF
@@ -67,6 +68,7 @@ cat <<EOF
 ────────────────────────────────────────────────────────────
   Web UI            http://localhost:5173
   Orchestrator API  http://localhost:8080
+  Research worker   (BullMQ — logs in .logs/worker.log)
   Ranking :8001   Parsing :8002   Synthesis :8003
   Qdrant            http://localhost:6333
   MinIO console     http://localhost:9001  (${MINIO_ROOT_USER:-minioadmin}/${MINIO_ROOT_PASSWORD:-minioadmin})

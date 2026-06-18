@@ -8,17 +8,23 @@
  * Enqueue:       enqueueResearch(createResearchQueue(redisUrl), request)
  */
 
+import type { ResolutionManifestEntry } from "@udaan/contracts";
 import type { Config } from "@udaan/shared";
 import { Queue, Worker, type ConnectionOptions, type Job } from "bullmq";
 import type { ResearchQueryRequest } from "../phases/query-orchestration/index.js";
 import { buildPipelineDeps } from "./index.js";
-import { runPipeline, type PipelineResult } from "./runPipeline.js";
+import { runPipeline, type PipelineResult, type ProgressEvent } from "./runPipeline.js";
 
 export const RESEARCH_QUEUE = "udaan:research";
 
+export interface ResearchJobResult {
+  pipeline: PipelineResult;
+  paywalled: ResolutionManifestEntry[];
+}
+
 /** Parse a redis:// URL into options BullMQ uses to build its own connection
  *  (avoids passing our ioredis instance, which can differ in version). */
-function connection(redisUrl: string): ConnectionOptions {
+export function connection(redisUrl: string): ConnectionOptions {
   const url = new URL(redisUrl);
   return {
     host: url.hostname,
@@ -31,31 +37,36 @@ function connection(redisUrl: string): ConnectionOptions {
   };
 }
 
-export function createResearchQueue(redisUrl: string): Queue<ResearchQueryRequest, PipelineResult> {
+export function createResearchQueue(redisUrl: string): Queue<ResearchQueryRequest, ResearchJobResult> {
   return new Queue(RESEARCH_QUEUE, { connection: connection(redisUrl) });
 }
 
 export function enqueueResearch(
-  queue: Queue<ResearchQueryRequest, PipelineResult>,
+  queue: Queue<ResearchQueryRequest, ResearchJobResult>,
   request: ResearchQueryRequest,
-): Promise<Job<ResearchQueryRequest, PipelineResult>> {
+): Promise<Job<ResearchQueryRequest, ResearchJobResult>> {
   return queue.add("research", request);
 }
 
 export function createResearchWorker(
   redisUrl: string,
   config: Config,
-): Worker<ResearchQueryRequest, PipelineResult> {
-  return new Worker<ResearchQueryRequest, PipelineResult>(
+): Worker<ResearchQueryRequest, ResearchJobResult> {
+  return new Worker<ResearchQueryRequest, ResearchJobResult>(
     RESEARCH_QUEUE,
     async (job) => {
+      let paywalled: ResolutionManifestEntry[] = [];
       const deps = buildPipelineDeps(config, {
-        // Stream per-phase progress onto the job (readable via job.progress).
-        onProgress: (event) => {
-          void job.updateProgress(event);
+        onProgress: (event: ProgressEvent) => {
+          void job.updateProgress({ kind: "phase", event });
+        },
+        onPaywalled: (entries) => {
+          paywalled = entries;
+          void job.updateProgress({ kind: "paywalled", entries });
         },
       });
-      return runPipeline(job.data, deps);
+      const pipeline = await runPipeline(job.data, deps);
+      return { pipeline, paywalled };
     },
     { connection: connection(redisUrl), concurrency: 2 },
   );
