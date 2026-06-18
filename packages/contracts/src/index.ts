@@ -6,6 +6,10 @@
  * (json-schema-to-typescript). The Python (Pydantic) mirror lives in
  * `python/udaan_contracts/models.py`. Validate payloads against the schema at
  * every phase boundary and every queue job.
+ *
+ * The runtime JSON Schemas (source of truth) are exposed from the separate
+ * `@udaan/contracts/schemas` entry so browser consumers of these types do not
+ * pull in the Node filesystem loader.
  */
 
 // --- Enums (schema/enums.schema.json) ---
@@ -119,6 +123,13 @@ export interface ValidatedClaim {
   sourceQuote: string;
   lineage: ClaimLineage;
   vectorEmbedding?: number[] | null;
+}
+
+/** Phase 5 `/ingest` response, consumed by the orchestrator pipeline. */
+export interface IngestResult {
+  projectId: string;
+  claimsExtracted: number;
+  claimIds: string[];
 }
 
 // --- Phase 6: SynthesisGraph ---

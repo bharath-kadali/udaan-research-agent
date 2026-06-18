@@ -10,7 +10,8 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@udaan/contracts": "workspace:*"
+    "@udaan/contracts": "workspace:*",
+    "ajv": "^8.17.1"
   },
   "devDependencies": {
     "@types/node": "^22.7.0",

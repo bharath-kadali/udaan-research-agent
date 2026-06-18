@@ -65,7 +65,7 @@ const parsing: ParsingService = {
   ingest: async (input) => {
     ingestCalls++;
     lastIngestInput = input;
-    return { claimsExtracted: 2 };
+    return { projectId: input.projectId, claimsExtracted: 2, claimIds: ["cl_a", "cl_b"] };
   },
 };
 
