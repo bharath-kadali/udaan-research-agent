@@ -66,7 +66,11 @@ export function loadConfig(): Config {
     },
     providers: {
       llm: parseEnum("LLM_PROVIDER", optional("LLM_PROVIDER") ?? "ollama", LLM_PROVIDERS),
-      embedding: parseEnum("EMBEDDING_PROVIDER", optional("EMBEDDING_PROVIDER") ?? "local", EMBEDDING_PROVIDERS),
+      embedding: parseEnum(
+        "EMBEDDING_PROVIDER",
+        optional("EMBEDDING_PROVIDER") ?? "local",
+        EMBEDDING_PROVIDERS,
+      ),
       rerank: parseEnum("RERANK_PROVIDER", optional("RERANK_PROVIDER") ?? "local", RERANK_PROVIDERS),
     },
     ollamaUrl: required("OLLAMA_URL"),

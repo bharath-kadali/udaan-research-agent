@@ -30,7 +30,12 @@ export function QueryConsole({ value, onChange, onSubmit, onSample, busy }: Quer
           <button type="button" className="btn btn--ghost" onClick={onSample} disabled={busy}>
             See a sample brief
           </button>
-          <button type="button" className="btn btn--accent" onClick={onSubmit} disabled={busy || value.trim().length < 8}>
+          <button
+            type="button"
+            className="btn btn--accent"
+            onClick={onSubmit}
+            disabled={busy || value.trim().length < 8}
+          >
             {busy ? "Synthesizing…" : "Run synthesis"}
           </button>
         </div>

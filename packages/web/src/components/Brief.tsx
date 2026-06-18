@@ -32,10 +32,9 @@ export function Brief({ brief }: { brief: ResearchBrief }) {
     <article className="brief" aria-label="Research brief">
       {degraded && (
         <div className="brief__degraded" role="alert">
-          <strong>Degraded mode.</strong> This brief was produced with low-quality
-          fallback implementations
-          {degradedStages.length > 0 ? ` for: ${degradedStages.join(", ")}` : ""}. Results may
-          be unreliable — install the ML extras for full-quality output.
+          <strong>Degraded mode.</strong> This brief was produced with low-quality fallback implementations
+          {degradedStages.length > 0 ? ` for: ${degradedStages.join(", ")}` : ""}. Results may be unreliable —
+          install the ML extras for full-quality output.
         </div>
       )}
       <header className="brief__meta">
@@ -69,7 +68,12 @@ export function Brief({ brief }: { brief: ResearchBrief }) {
                   <div className="bib__ids">
                     <span className="bib__claim">{entry.claimId}</span>
                     {entry.doi && (
-                      <a className="bib__doi" href={`https://doi.org/${entry.doi}`} target="_blank" rel="noreferrer">
+                      <a
+                        className="bib__doi"
+                        href={`https://doi.org/${entry.doi}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         {entry.doi}
                       </a>
                     )}

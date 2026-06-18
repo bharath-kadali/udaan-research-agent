@@ -99,9 +99,7 @@ export function App() {
 
         {mode === "idle" && (
           <section className="hero">
-            <h1 className="hero__headline">
-              Every claim in your brief traces to a real passage.
-            </h1>
+            <h1 className="hero__headline">Every claim in your brief traces to a real passage.</h1>
             <p className="hero__sub">
               Ask a research question. Udaan searches the literature, reads the papers, and synthesizes a
               brief — and every sentence it returns is anchored to a source you can open and verify.
@@ -111,7 +109,9 @@ export function App() {
               <figcaption className="anatomy__cap">Anatomy of a traced claim</figcaption>
               <p className="anatomy__claim">
                 Micro-caching reduced p99 tail latency by roughly 40% under standard load
-                <a className="cite cite--static" href="#ref-1">1</a>
+                <a className="cite cite--static" href="#ref-1">
+                  1
+                </a>
               </p>
               <div className="anatomy__thread" aria-hidden="true" />
               <div className="anatomy__source">
@@ -125,13 +125,9 @@ export function App() {
           </section>
         )}
 
-        {(mode === "running" || mode === "done") && (
-          <PipelineLedger statuses={statuses} details={details} />
-        )}
+        {(mode === "running" || mode === "done") && <PipelineLedger statuses={statuses} details={details} />}
 
-        {isSample && (
-          <p className="banner banner--sample">Sample brief — illustrative, not a live run.</p>
-        )}
+        {isSample && <p className="banner banner--sample">Sample brief — illustrative, not a live run.</p>}
 
         {mode === "rejected" && <p className="banner banner--warn">{message}</p>}
 

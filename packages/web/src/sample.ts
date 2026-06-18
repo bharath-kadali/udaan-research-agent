@@ -24,7 +24,8 @@ export const SAMPLE_BRIEF: ResearchBrief = {
     },
     {
       heading: "Open Questions & Thin Evidence",
-      bodyText: "CPU utilization is reported to scale linearly with cache volume, but on limited samples [3].",
+      bodyText:
+        "CPU utilization is reported to scale linearly with cache volume, but on limited samples [3].",
     },
   ],
   bibliography: {

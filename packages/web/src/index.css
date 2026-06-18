@@ -176,7 +176,10 @@ a {
   border-radius: 8px;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .btn:disabled {
@@ -408,8 +411,13 @@ a {
 }
 
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 0 var(--accent-soft); }
-  50% { box-shadow: 0 0 0 5px var(--accent-soft); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--accent-soft);
+  }
+  50% {
+    box-shadow: 0 0 0 5px var(--accent-soft);
+  }
 }
 
 /* ---------- Banners ---------- */
@@ -497,9 +505,15 @@ a {
   flex: none;
 }
 
-.brief__section--conflict .brief__tick { background: var(--conflict); }
-.brief__section--consensus .brief__tick { background: var(--consensus); }
-.brief__section--thin .brief__tick { background: var(--thin); }
+.brief__section--conflict .brief__tick {
+  background: var(--conflict);
+}
+.brief__section--consensus .brief__tick {
+  background: var(--consensus);
+}
+.brief__section--thin .brief__tick {
+  background: var(--thin);
+}
 
 .brief__body {
   font-family: var(--font-serif);
@@ -531,7 +545,9 @@ a {
   padding: 12px 14px;
   border-radius: 8px;
   border: 1px solid transparent;
-  transition: background 0.3s ease, border-color 0.3s ease;
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease;
 }
 
 .bib__item:target {
