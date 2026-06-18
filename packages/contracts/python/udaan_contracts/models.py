@@ -181,8 +181,10 @@ class BriefSection(_Base):
 class BriefMetadata(_Base):
     total_claims: int = Field(alias="totalClaims", ge=0)
     sections_generated: int = Field(alias="sectionsGenerated", ge=0)
-    degraded: bool = False
-    degraded_stages: list[str] = Field(default_factory=list, alias="degradedStages")
+    # Required, to stay in lockstep with the JSON Schema (which marks them
+    # required) and the TS view; the brief generator always sets both.
+    degraded: bool
+    degraded_stages: list[str] = Field(alias="degradedStages")
 
 
 class ResearchBrief(_Base):
