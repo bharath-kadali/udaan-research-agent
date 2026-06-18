@@ -5,17 +5,28 @@ The cross-phase data contracts — **the source of truth for every phase boundar
 ## How it works
 
 - **`schema/*.schema.json`** — JSON Schema is the single source of truth.
-- **`src/index.ts`** — TypeScript view (consumed by the orchestrator + web).
-- **`python/udaan_contracts/models.py`** — Pydantic view (consumed by the Python services).
+- **`src/generated/*.ts`** — TypeScript view (generated; re-exported from `src/index.ts`).
+- **`python/udaan_contracts/models.py`** — Pydantic view (generated re-exports from `generated/`).
 
-Both language views are kept in sync with the schemas and are intended to be
-**code-generated**:
+Both language views are **code-generated** from the schemas:
 
-- TS: `pnpm gen` → `json-schema-to-typescript`
-- Python: `datamodel-codegen --input ../schema --output udaan_contracts/models.py`
+```bash
+pnpm --filter @udaan/contracts gen
+```
 
-Until codegen is wired into the build, the two views are maintained by hand to
-match the schemas. Treat the schema as authoritative if they ever disagree.
+This runs `json-schema-to-typescript` for the TS types and `datamodel-code-generator`
+for the Pydantic models. **Do not hand-edit generated files** — change the schema,
+then regenerate.
+
+### Drift check
+
+CI (and locally) verifies committed generated output matches a fresh run:
+
+```bash
+pnpm --filter @udaan/contracts check-drift
+```
+
+If this fails, run `gen` and commit the updated artifacts.
 
 ## The rule
 
@@ -25,14 +36,13 @@ Python sides fails loudly instead of silently corrupting traceability.
 
 ## Coverage
 
-Foundation set (vertical slice, Phases 1–3) is defined now:
-
 | Contract | Producer → Consumer |
 | --- | --- |
 | `CompiledDiscoveryManifest` | Phase 1 → 2 |
 | `CandidatePaper` | Phase 2 → 3 |
 | `PrioritizedIngestionIndex` / `RankedPaper` | Phase 3 → 4 |
+| `ResolutionManifest` | Phase 4 → 5 |
+| `ValidatedClaim` / `IngestResult` | Phase 5 → 6 |
+| `SynthesisGraph` | Phase 6 → 7 |
+| `ResearchBrief` | Phase 7 → UI |
 | Enums: `ResolutionStatus`, `ClaimClassification`, `ClusterPolarity` | shared |
-
-Remaining contracts (`ResolutionManifest`, `ValidatedClaim`, `SynthesisGraph`,
-`ResearchBrief`) are added to `schema/` as their phase is implemented.

@@ -6,20 +6,8 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["claimId", "projectId", "documentDoi", "claimClassification", "claimText", "sourceQuote", "lineage"],
-  "properties": {
-    "claimId": { "type": "string" },
-    "projectId": { "type": "string" },
-    "documentDoi": { "type": ["string", "null"] },
-    "claimClassification": {
-      "type": "string",
-      "enum": ["FINDING", "HYPOTHESIS", "LIMITATION", "METHODOLOGY"]
-    },
-    "claimText": { "type": "string" },
-    "sourceQuote": {
-      "type": "string",
-      "description": "Exact, unmodified substring of the source chunk (verified deterministically)."
-    },
-    "lineage": {
+  "$defs": {
+    "ClaimLineage": {
       "type": "object",
       "additionalProperties": false,
       "required": ["section", "pageNumber", "structuralNodeType"],
@@ -29,7 +17,19 @@
         "pageNumber": { "type": "integer", "minimum": 0 },
         "structuralNodeType": { "type": "string" }
       }
+    }
+  },
+  "properties": {
+    "claimId": { "type": "string" },
+    "projectId": { "type": "string" },
+    "documentDoi": { "type": ["string", "null"] },
+    "claimClassification": { "$ref": "enums.schema.json#/$defs/ClaimClassification" },
+    "claimText": { "type": "string" },
+    "sourceQuote": {
+      "type": "string",
+      "description": "Exact, unmodified substring of the source chunk (verified deterministically)."
     },
+    "lineage": { "$ref": "#/$defs/ClaimLineage" },
     "vectorEmbedding": {
       "type": ["array", "null"],
       "items": { "type": "number" }

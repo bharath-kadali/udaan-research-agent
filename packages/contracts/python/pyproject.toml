@@ -5,6 +5,9 @@ description = "Cross-phase contracts (Pydantic view) for the Udaan Research Agen
 requires-python = ">=3.11"
 dependencies = ["pydantic>=2.7"]
 
+[dependency-groups]
+dev = ["datamodel-code-generator>=0.27"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

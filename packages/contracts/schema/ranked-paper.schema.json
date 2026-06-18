@@ -6,26 +6,29 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["projectId", "totalProcessed", "totalFiltered", "rankedManifest"],
+  "$defs": {
+    "RankedPaper": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rank", "relevanceScore", "internalId", "doi", "title", "abstract", "publicationDate"],
+      "properties": {
+        "rank": { "type": "integer", "minimum": 1 },
+        "relevanceScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "internalId": { "type": "string" },
+        "doi": { "type": ["string", "null"] },
+        "title": { "type": "string" },
+        "abstract": { "type": "string" },
+        "publicationDate": { "type": "string" }
+      }
+    }
+  },
   "properties": {
     "projectId": { "type": "string" },
     "totalProcessed": { "type": "integer", "minimum": 0 },
     "totalFiltered": { "type": "integer", "minimum": 0 },
     "rankedManifest": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["rank", "relevanceScore", "internalId", "doi", "title", "abstract", "publicationDate"],
-        "properties": {
-          "rank": { "type": "integer", "minimum": 1 },
-          "relevanceScore": { "type": "number", "minimum": 0, "maximum": 1 },
-          "internalId": { "type": "string" },
-          "doi": { "type": ["string", "null"] },
-          "title": { "type": "string" },
-          "abstract": { "type": "string" },
-          "publicationDate": { "type": "string" }
-        }
-      }
+      "items": { "$ref": "#/$defs/RankedPaper" }
     }
   }
 }

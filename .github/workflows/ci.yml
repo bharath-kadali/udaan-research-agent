@@ -20,6 +20,30 @@ permissions:
   contents: read
 
 jobs:
+  contracts:
+    name: Contracts (codegen drift)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install datamodel-code-generator
+        run: pip install "datamodel-code-generator>=0.27"
+
+      - name: Verify generated contracts match schema
+        run: pnpm --filter @udaan/contracts check-drift
+
   ts:
     name: TypeScript (typecheck + test)
     runs-on: ubuntu-latest

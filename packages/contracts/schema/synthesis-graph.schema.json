@@ -6,36 +6,37 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["projectId", "synthesisGraph"],
+  "$defs": {
+    "SynthesisClaimRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claimId", "doi", "text"],
+      "properties": {
+        "claimId": { "type": "string" },
+        "doi": { "type": ["string", "null"] },
+        "text": { "type": "string" }
+      }
+    },
+    "SynthesisCluster": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["clusterId", "generatedTopicLabel", "polarity", "claims"],
+      "properties": {
+        "clusterId": { "type": "string" },
+        "generatedTopicLabel": { "type": "string" },
+        "polarity": { "$ref": "enums.schema.json#/$defs/ClusterPolarity" },
+        "claims": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SynthesisClaimRef" }
+        }
+      }
+    }
+  },
   "properties": {
     "projectId": { "type": "string" },
     "synthesisGraph": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["clusterId", "generatedTopicLabel", "polarity", "claims"],
-        "properties": {
-          "clusterId": { "type": "string" },
-          "generatedTopicLabel": { "type": "string" },
-          "polarity": {
-            "type": "string",
-            "enum": ["AGREEMENT", "CONTRADICTION", "THIN_EVIDENCE", "NOISE"]
-          },
-          "claims": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["claimId", "doi", "text"],
-              "properties": {
-                "claimId": { "type": "string" },
-                "doi": { "type": ["string", "null"] },
-                "text": { "type": "string" }
-              }
-            }
-          }
-        }
-      }
+      "items": { "$ref": "#/$defs/SynthesisCluster" }
     }
   }
 }

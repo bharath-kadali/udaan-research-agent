@@ -6,9 +6,8 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["projectId", "resolutionSummary", "manifest"],
-  "properties": {
-    "projectId": { "type": "string" },
-    "resolutionSummary": {
+  "$defs": {
+    "ResolutionSummary": {
       "type": "object",
       "additionalProperties": false,
       "required": ["totalRequested", "successfullyResolved", "paywalled"],
@@ -18,28 +17,31 @@
         "paywalled": { "type": "integer", "minimum": 0 }
       }
     },
+    "MetadataSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title"],
+      "properties": { "title": { "type": "string" } }
+    },
+    "ResolutionManifestEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["internalId", "doi", "status", "storagePointer", "metadataSnapshot"],
+      "properties": {
+        "internalId": { "type": "string" },
+        "doi": { "type": ["string", "null"] },
+        "status": { "$ref": "enums.schema.json#/$defs/ResolutionStatus" },
+        "storagePointer": { "type": ["string", "null"] },
+        "metadataSnapshot": { "$ref": "#/$defs/MetadataSnapshot" }
+      }
+    }
+  },
+  "properties": {
+    "projectId": { "type": "string" },
+    "resolutionSummary": { "$ref": "#/$defs/ResolutionSummary" },
     "manifest": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["internalId", "doi", "status", "storagePointer", "metadataSnapshot"],
-        "properties": {
-          "internalId": { "type": "string" },
-          "doi": { "type": ["string", "null"] },
-          "status": {
-            "type": "string",
-            "enum": ["PENDING", "RESOLVED_CACHE", "RESOLVED_DOWNLOAD", "PAYWALLED", "FAILED_CORRUPTED"]
-          },
-          "storagePointer": { "type": ["string", "null"] },
-          "metadataSnapshot": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["title"],
-            "properties": { "title": { "type": "string" } }
-          }
-        }
-      }
+      "items": { "$ref": "#/$defs/ResolutionManifestEntry" }
     }
   }
 }

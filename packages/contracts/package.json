@@ -10,7 +10,8 @@
     "./schemas": "./src/schemas.ts"
   },
   "scripts": {
-    "gen": "json2ts -i \"schema/*.schema.json\" -o src/generated",
+    "gen": "node scripts/generate.mjs",
+    "check-drift": "node scripts/generate.mjs && git diff --exit-code -- src/generated python/udaan_contracts/models.py",
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.json"
 

@@ -6,26 +6,28 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["projectId", "searchContext", "compilations"],
-  "properties": {
-    "projectId": { "type": "string" },
-    "searchContext": {
+  "$defs": {
+    "TemporalBounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "startYear": { "type": "integer" },
+        "endYear": { "type": "integer" }
+      }
+    },
+    "SearchContext": {
       "type": "object",
       "additionalProperties": false,
       "required": ["originalQuery", "coreConcepts"],
       "properties": {
         "originalQuery": { "type": "string" },
         "temporalBounds": {
-          "type": ["object", "null"],
-          "additionalProperties": false,
-          "properties": {
-            "startYear": { "type": "integer" },
-            "endYear": { "type": "integer" }
-          }
+          "anyOf": [{ "$ref": "#/$defs/TemporalBounds" }, { "type": "null" }]
         },
         "coreConcepts": { "type": "array", "items": { "type": "string" } }
       }
     },
-    "compilations": {
+    "Compilations": {
       "type": "object",
       "additionalProperties": false,
       "required": ["booleanStandard"],
@@ -35,7 +37,7 @@
         "semanticScholarPayload": { "type": ["object", "null"] }
       }
     },
-    "telemetry": {
+    "DiscoveryTelemetry": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -44,5 +46,11 @@
         "degradedMode": { "type": ["boolean", "null"] }
       }
     }
+  },
+  "properties": {
+    "projectId": { "type": "string" },
+    "searchContext": { "$ref": "#/$defs/SearchContext" },
+    "compilations": { "$ref": "#/$defs/Compilations" },
+    "telemetry": { "$ref": "#/$defs/DiscoveryTelemetry" }
   }
 }

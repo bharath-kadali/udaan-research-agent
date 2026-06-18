@@ -6,9 +6,8 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["projectId", "metadata", "sections", "bibliography"],
-  "properties": {
-    "projectId": { "type": "string" },
-    "metadata": {
+  "$defs": {
+    "BriefMetadata": {
       "type": "object",
       "additionalProperties": false,
       "required": ["totalClaims", "sectionsGenerated", "degraded", "degradedStages"],
@@ -26,30 +25,36 @@
         }
       }
     },
+    "BriefSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["heading", "bodyText"],
+      "properties": {
+        "heading": { "type": "string" },
+        "bodyText": { "type": "string" }
+      }
+    },
+    "BibliographyEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claimId", "doi", "text"],
+      "properties": {
+        "claimId": { "type": "string" },
+        "doi": { "type": ["string", "null"] },
+        "text": { "type": "string" }
+      }
+    }
+  },
+  "properties": {
+    "projectId": { "type": "string" },
+    "metadata": { "$ref": "#/$defs/BriefMetadata" },
     "sections": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["heading", "bodyText"],
-        "properties": {
-          "heading": { "type": "string" },
-          "bodyText": { "type": "string" }
-        }
-      }
+      "items": { "$ref": "#/$defs/BriefSection" }
     },
     "bibliography": {
       "type": "object",
-      "additionalProperties": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["claimId", "doi", "text"],
-        "properties": {
-          "claimId": { "type": "string" },
-          "doi": { "type": ["string", "null"] },
-          "text": { "type": "string" }
-        }
-      }
+      "additionalProperties": { "$ref": "#/$defs/BibliographyEntry" }
     }
   }
 }
