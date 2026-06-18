@@ -98,3 +98,14 @@ All endpoints, credentials, and model names are environment variables
 config change. Providers (LLM / embedding / re-rank) are swappable between local,
 free-tier API, and paid (Claude) via `LLM_PROVIDER` / `EMBEDDING_PROVIDER` /
 `RERANK_PROVIDER`.
+
+## Contributing
+
+Contributions are welcome — see [`CONTRIBUTING.md`](./CONTRIBUTING.md) for local
+setup, conventions, and the review/merge workflow. By participating you agree to
+the [Code of Conduct](./CODE_OF_CONDUCT.md). To report a vulnerability, see
+[`SECURITY.md`](./SECURITY.md).
+
+## License
+
+[MIT](./LICENSE) © Vimal Yadav
