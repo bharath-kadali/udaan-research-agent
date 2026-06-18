@@ -146,7 +146,7 @@ describe("runPipeline (end-to-end)", () => {
   it("flags degraded mode when a service reports a fallback implementation", async () => {
     const events: ProgressEvent[] = [];
     const degradedParsing: ParsingService = {
-      ingest: async () => ({ claimsExtracted: 1 }),
+      ingest: async (input) => ({ projectId: input.projectId, claimsExtracted: 1, claimIds: ["cl_a"] }),
       quality: async () => [
         { stage: "embedding", implementation: "hashing", degraded: true },
         { stage: "parsing", implementation: "pypdf", degraded: true },
