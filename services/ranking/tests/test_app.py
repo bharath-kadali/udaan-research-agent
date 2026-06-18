@@ -14,6 +14,7 @@ REQUIRED_ENV = {
     "LLM_MODEL": "qwen2.5:7b-instruct-q4_K_M",
     "EMBEDDING_MODEL": "BAAI/bge-base-en-v1.5",
     "RERANK_MODEL": "BAAI/bge-reranker-base",
+    "OLLAMA_URL": "http://localhost:11434",
     "RANKING_SERVICE_URL": "http://localhost:8001",
     "PARSING_SERVICE_URL": "http://localhost:8002",
     "SYNTHESIS_SERVICE_URL": "http://localhost:8003",
