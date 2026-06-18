@@ -6,6 +6,14 @@ Phase 1 serves as the ingest gateway for natural language user intent, translati
 
 ---
 
+## Implementation Stack (finalized — see `STACK.md`)
+
+- **Language:** TypeScript (Node.js 20) — orchestration spine.
+- **Cache:** Redis (query-hash cache) as a local docker-compose container; URL via env config (no hardcoded host) for deploy portability.
+- **Intent LLM** (behind an LLM-provider interface): free → Google AI Studio **Gemini 2.0 Flash**; local/offline → **Qwen2.5-7B-Instruct** (Q4, Ollama) or `Qwen2.5-3B`. Zero-temperature, JSON-schema output.
+
+---
+
 ## 1. Architectural Overview
 
 Natural language research queries are often conversational, ambiguous, or conceptually clustered. Conversely, public academic graphs (such as OpenAlex and Semantic Scholar) rely on precise lexical parameters, boolean operators, or constrained entity filters.

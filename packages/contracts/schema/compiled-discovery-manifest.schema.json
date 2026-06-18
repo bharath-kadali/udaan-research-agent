@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://udaan.dev/schema/compiled-discovery-manifest.json",
+  "title": "CompiledDiscoveryManifest",
+  "description": "Phase 1 (Query Orchestration) output, consumed by Phase 2.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["projectId", "searchContext", "compilations"],
+  "properties": {
+    "projectId": { "type": "string" },
+    "searchContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["originalQuery", "coreConcepts"],
+      "properties": {
+        "originalQuery": { "type": "string" },
+        "temporalBounds": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "startYear": { "type": "integer" },
+            "endYear": { "type": "integer" }
+          }
+        },
+        "coreConcepts": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "compilations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["booleanStandard"],
+      "properties": {
+        "booleanStandard": { "type": "string" },
+        "openAlexFilter": { "type": ["string", "null"] },
+        "semanticScholarPayload": { "type": ["object", "null"] }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inputTokens": { "type": ["integer", "null"] },
+        "classificationStatus": { "type": ["string", "null"] },
+        "degradedMode": { "type": ["boolean", "null"] }
+      }
+    }
+  }
+}

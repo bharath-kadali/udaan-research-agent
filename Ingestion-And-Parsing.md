@@ -6,6 +6,15 @@ Phase 5 transforms raw, unstructured physical assets (PDFs) into highly structur
 
 ---
 
+## Implementation Stack (finalized — see `STACK.md`)
+
+- **Language:** Python service — **Docling** is Python-only and the linchpin of quote-anchored traceability; no TS equivalent.
+- **Embeddings** (behind an `EmbeddingProvider` interface): local → **`BAAI/bge-base-en-v1.5`** (768-dim); free API → Cohere `embed-v3`.
+- **Claim-extraction LLM** (behind an LLM-provider interface): local → **Qwen2.5-7B-Instruct** (Q4, Ollama); free → Gemini 2.0 Flash; paid → Claude Haiku 4.5 for high volume.
+- **Vector store:** Qdrant, local container via docker-compose.
+
+---
+
 ## 1. Architectural Overview
 
 Standard ingestion pipelines (like those relying on basic PyPDF or naive OCR) fail catastrophically on academic papers. Two-column layouts get scrambled, floating tables interrupt paragraphs, and mathematical formulas are reduced to gibberish. If the text extraction is corrupted, the downstream claim extraction will hallucinate.

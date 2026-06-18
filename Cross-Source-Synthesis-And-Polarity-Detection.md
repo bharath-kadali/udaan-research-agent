@@ -1,14 +1,16 @@
-Here is the complete architectural design for Phase 6, Vimal.
-
-This phase addresses the most complex computational logic in the entire system. Standard RAG architecture breaks down here because semantic vectors cannot distinguish between a finding that *supports* a hypothesis and one that *refutes* it; they simply map both as highly related. This architecture solves that by divorcing the grouping of topics from the evaluation of truth.
-
----
-
 # Architectural Design Document: Phase 6 — Cross-Source Synthesis & Polarity Detection
 
 This document establishes the architectural layout and technical specifications for **Phase 6: Cross-Source Synthesis & Polarity Detection** within the Academic Paper Discovery and Synthesis Engine.
 
 Phase 6 extracts logical meaning from mathematical proximity. It fetches the discrete, context-aware claims generated in Phase 5, groups them strictly by topical bounds using statistical clustering, and cross-examines those clusters using an LLM to explicitly map academic consensus, contradiction, and literature gaps.
+
+---
+
+## Implementation Stack (finalized — see `STACK.md`)
+
+- **Language:** Python service — SciPy/NumPy + HDBSCAN/Agglomerative clustering (CPU-bound); no TS equivalent.
+- **Polarity-judge LLM** (behind an LLM-provider interface; trust-critical): local → Qwen2.5-7B (Q4) — adequate but weakest here; free → **Groq Llama 3.3 70B**; paid (recommended) → **Claude Opus 4.8** (use adaptive thinking; omit `temperature`/`top_p`).
+- **GPU note:** dev GPU is **8GB VRAM**; the O(n²) clustering runs on CPU so the GPU is free for the polarity model. Phases run sequentially via the BullMQ queue.
 
 ---
 

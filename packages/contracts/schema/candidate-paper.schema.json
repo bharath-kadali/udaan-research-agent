@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://udaan.dev/schema/candidate-paper.json",
+  "title": "CandidatePaper",
+  "description": "The sole DTO allowed to exit Phase 2 (Open Graph Gateway) and enter Phase 3.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "internalId",
+    "doi",
+    "title",
+    "abstract",
+    "authors",
+    "publicationDate",
+    "citationCount",
+    "sourceProviders",
+    "sourceUrls"
+  ],
+  "properties": {
+    "internalId": { "type": "string", "description": "UUID generated during normalization" },
+    "doi": { "type": ["string", "null"], "description": "Nullable for pre-prints" },
+    "title": { "type": "string" },
+    "abstract": { "type": "string", "minLength": 50 },
+    "authors": { "type": "array", "items": { "type": "string" } },
+    "publicationDate": { "type": "string", "description": "ISO 8601 (YYYY-MM-DD)" },
+    "citationCount": { "type": "integer", "minimum": 0 },
+    "sourceProviders": { "type": "array", "items": { "type": "string" } },
+    "sourceUrls": { "type": "array", "items": { "type": "string" } }
+  }
+}
