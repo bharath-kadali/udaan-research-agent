@@ -5,7 +5,7 @@
   "description": "Phase 1 (Query Orchestration) output, consumed by Phase 2.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["projectId", "searchContext", "compilations", "telemetry"],
+  "required": ["projectId", "searchContext", "compilations"],
   "properties": {
     "projectId": { "type": "string" },
     "searchContext": {
@@ -31,17 +31,17 @@
       "required": ["booleanStandard"],
       "properties": {
         "booleanStandard": { "type": "string" },
-        "openAlexFilter": { "type": "string" },
-        "semanticScholarPayload": { "type": "object" }
+        "openAlexFilter": { "type": ["string", "null"] },
+        "semanticScholarPayload": { "type": ["object", "null"] }
       }
     },
     "telemetry": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "inputTokens": { "type": "integer" },
-        "classificationStatus": { "type": "string" },
-        "degradedMode": { "type": "boolean" }
+        "inputTokens": { "type": ["integer", "null"] },
+        "classificationStatus": { "type": ["string", "null"] },
+        "degradedMode": { "type": ["boolean", "null"] }
       }
     }
   }

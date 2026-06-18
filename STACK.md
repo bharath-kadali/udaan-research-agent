@@ -62,6 +62,7 @@ The system runs entirely on a local machine today. There is **no production depl
 All model access sits behind provider interfaces (`EmbeddingProvider`, LLM provider), so local ↔ free-API ↔ paid swaps are a config change, consistent with §2.
 
 **Tier 1 — Local (offline, fits 8GB):**
+
 | Phase | Task | Model | Footprint | Runtime |
 | --- | --- | --- | --- | --- |
 | 5 | Embeddings | `BAAI/bge-base-en-v1.5` (768-dim) | ~0.4 GB | sentence-transformers |

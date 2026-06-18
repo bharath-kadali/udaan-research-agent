@@ -43,6 +43,16 @@ function optional(name: string): string | undefined {
   return value === "" ? undefined : value;
 }
 
+const LLM_PROVIDERS = ["ollama", "gemini", "groq", "anthropic"] as const;
+const EMBEDDING_PROVIDERS = ["local", "cohere"] as const;
+const RERANK_PROVIDERS = ["local", "cohere"] as const;
+
+/** Validate an env value against an allowed set instead of blind-casting. */
+function parseEnum<T extends string>(name: string, value: string, allowed: readonly T[]): T {
+  if ((allowed as readonly string[]).includes(value)) return value as T;
+  throw new Error(`Invalid ${name}=${value}. Allowed: ${allowed.join(", ")}`);
+}
+
 export function loadConfig(): Config {
   return {
     qdrantUrl: required("QDRANT_URL"),
@@ -55,11 +65,11 @@ export function loadConfig(): Config {
       region: optional("S3_REGION") ?? "us-east-1",
     },
     providers: {
-      llm: (optional("LLM_PROVIDER") ?? "ollama") as LLMProviderName,
-      embedding: (optional("EMBEDDING_PROVIDER") ?? "local") as EmbeddingProviderName,
-      rerank: (optional("RERANK_PROVIDER") ?? "local") as RerankProviderName,
+      llm: parseEnum("LLM_PROVIDER", optional("LLM_PROVIDER") ?? "ollama", LLM_PROVIDERS),
+      embedding: parseEnum("EMBEDDING_PROVIDER", optional("EMBEDDING_PROVIDER") ?? "local", EMBEDDING_PROVIDERS),
+      rerank: parseEnum("RERANK_PROVIDER", optional("RERANK_PROVIDER") ?? "local", RERANK_PROVIDERS),
     },
-    ollamaUrl: optional("OLLAMA_URL") ?? "http://localhost:11434",
+    ollamaUrl: required("OLLAMA_URL"),
     models: {
       llm: required("LLM_MODEL"),
       embedding: required("EMBEDDING_MODEL"),

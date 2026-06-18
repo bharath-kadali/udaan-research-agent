@@ -61,7 +61,7 @@ def load_config() -> Config:
         llm_provider=_optional("LLM_PROVIDER", "ollama") or "ollama",
         embedding_provider=_optional("EMBEDDING_PROVIDER", "local") or "local",
         rerank_provider=_optional("RERANK_PROVIDER", "local") or "local",
-        ollama_url=_optional("OLLAMA_URL", "http://localhost:11434") or "http://localhost:11434",
+        ollama_url=_required("OLLAMA_URL"),
         llm_model=_required("LLM_MODEL"),
         embedding_model=_required("EMBEDDING_MODEL"),
         rerank_model=_required("RERANK_MODEL"),

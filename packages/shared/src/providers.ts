@@ -20,6 +20,15 @@ export interface LLMCompleteOptions {
   /** When set, the provider must constrain output to this JSON Schema. */
   jsonSchema?: Record<string, unknown>;
   maxTokens?: number;
+  /** Sampling temperature (local / Gemini / Groq). Omit for Anthropic. */
+  temperature?: number;
+  /** Nucleus sampling (local / Gemini / Groq). Omit for Anthropic. */
+  topP?: number;
+  /**
+   * Adaptive-thinking control for the Anthropic provider, which must NOT send
+   * temperature/top_p (they 400 on Opus 4.8/4.7/Fable 5).
+   */
+  thinking?: { type: "adaptive" | "disabled" };
 }
 
 export interface LLMProvider {

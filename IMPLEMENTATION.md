@@ -10,7 +10,7 @@ Read this alongside [`STACK.md`](./STACK.md) (decisions + rationale). When imple
 
 ## 0. The shared layer (every phase depends on this)
 
-```
+```text
 ┌──────────────────────────── runs natively on host ────────────────────────────┐
 │  packages/web (Vite)   packages/orchestrator (TS: P1,P2,P4,P7 + BullMQ workers) │
 │  services/ranking (P3)  services/parsing (P5)  services/synthesis (P6)  [Python]│
@@ -30,7 +30,7 @@ Read this alongside [`STACK.md`](./STACK.md) (decisions + rationale). When imple
 
 ## 1. Monorepo bootstrap (one-time)
 
-```
+```text
 udaan/
 ├─ packages/                 # TypeScript (pnpm workspaces + Turborepo)
 │  ├─ contracts/             # schema source of truth → TS types + Python pydantic
@@ -150,7 +150,7 @@ Every phase consumes/produces a contract type from here — never hand-rolls a p
 
 LLM, embedding, and rerank access sit behind interfaces so local ↔ free-API ↔ paid is a config flip (`LLM_PROVIDER`, etc.). Implement once in `packages/shared` (TS) and a mirror in `services/*` (Python).
 
-```
+```text
 EmbeddingProvider          LLMProvider               RerankProvider
  ├─ LocalST  (bge-base)     ├─ Ollama  (Qwen2.5-7B)    ├─ LocalCE (bge-reranker-base)
  └─ Cohere   (embed-v3)     ├─ Gemini  (2.0 Flash)     └─ Cohere  (rerank-v3.5)
