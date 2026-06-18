@@ -3,10 +3,11 @@ and CohereEmbeddingProvider.
 
 All HTTP is mocked via pytest-httpx — no live API keys required in CI.
 """
+
 from __future__ import annotations
 
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -47,43 +48,29 @@ class TestGeminiLLMProvider:
             GeminiLLMProvider(_cfg())
 
     def test_returns_text_from_candidates(self, httpx_mock):
-        httpx_mock.add_response(
-            json={
-                "candidates": [{"content": {"parts": [{"text": "pong"}]}}]
-            }
-        )
+        httpx_mock.add_response(json={"candidates": [{"content": {"parts": [{"text": "pong"}]}}]})
         result = self._provider().complete([{"role": "user", "content": "ping"}])
         assert result == "pong"
 
     def test_sends_temperature_zero_by_default(self, httpx_mock):
-        httpx_mock.add_response(
-            json={"candidates": [{"content": {"parts": [{"text": ""}]}}]}
-        )
+        httpx_mock.add_response(json={"candidates": [{"content": {"parts": [{"text": ""}]}}]})
         self._provider().complete([{"role": "user", "content": "hi"}])
         request = httpx_mock.get_requests()[0]
         body = json.loads(request.content)
         assert body["generationConfig"]["temperature"] == 0
 
     def test_sets_json_mime_type_when_json_schema_provided(self, httpx_mock):
-        httpx_mock.add_response(
-            json={"candidates": [{"content": {"parts": [{"text": "{}"}]}}]}
-        )
+        httpx_mock.add_response(json={"candidates": [{"content": {"parts": [{"text": "{}"}]}}]})
         schema = {"type": "object"}
-        self._provider().complete(
-            [{"role": "user", "content": "hi"}], json_schema=schema
-        )
+        self._provider().complete([{"role": "user", "content": "hi"}], json_schema=schema)
         request = httpx_mock.get_requests()[0]
         body = json.loads(request.content)
         assert body["generationConfig"]["responseMimeType"] == "application/json"
         assert body["generationConfig"]["responseSchema"] == schema
 
     def test_sends_system_instruction(self, httpx_mock):
-        httpx_mock.add_response(
-            json={"candidates": [{"content": {"parts": [{"text": ""}]}}]}
-        )
-        self._provider().complete(
-            [{"role": "user", "content": "hi"}], system="Be concise"
-        )
+        httpx_mock.add_response(json={"candidates": [{"content": {"parts": [{"text": ""}]}}]})
+        self._provider().complete([{"role": "user", "content": "hi"}], system="Be concise")
         request = httpx_mock.get_requests()[0]
         body = json.loads(request.content)
         assert body["systemInstruction"]["parts"][0]["text"] == "Be concise"
@@ -107,40 +94,28 @@ class TestGroqLLMProvider:
             GroqLLMProvider(_cfg())
 
     def test_returns_choices_content(self, httpx_mock):
-        httpx_mock.add_response(
-            json={"choices": [{"message": {"content": "pong"}}]}
-        )
+        httpx_mock.add_response(json={"choices": [{"message": {"content": "pong"}}]})
         result = self._provider().complete([{"role": "user", "content": "ping"}])
         assert result == "pong"
 
     def test_sends_temperature_zero(self, httpx_mock):
-        httpx_mock.add_response(
-            json={"choices": [{"message": {"content": ""}}]}
-        )
+        httpx_mock.add_response(json={"choices": [{"message": {"content": ""}}]})
         self._provider().complete([{"role": "user", "content": "hi"}])
         request = httpx_mock.get_requests()[0]
         body = json.loads(request.content)
         assert body["temperature"] == 0
 
     def test_prepends_system_message(self, httpx_mock):
-        httpx_mock.add_response(
-            json={"choices": [{"message": {"content": ""}}]}
-        )
-        self._provider().complete(
-            [{"role": "user", "content": "hi"}], system="You are helpful"
-        )
+        httpx_mock.add_response(json={"choices": [{"message": {"content": ""}}]})
+        self._provider().complete([{"role": "user", "content": "hi"}], system="You are helpful")
         request = httpx_mock.get_requests()[0]
         body = json.loads(request.content)
         assert body["messages"][0] == {"role": "system", "content": "You are helpful"}
         assert body["messages"][1] == {"role": "user", "content": "hi"}
 
     def test_sets_json_object_format_when_json_schema_provided(self, httpx_mock):
-        httpx_mock.add_response(
-            json={"choices": [{"message": {"content": "{}"}}]}
-        )
-        self._provider().complete(
-            [{"role": "user", "content": "hi"}], json_schema={"type": "object"}
-        )
+        httpx_mock.add_response(json={"choices": [{"message": {"content": "{}"}}]})
+        self._provider().complete([{"role": "user", "content": "hi"}], json_schema={"type": "object"})
         request = httpx_mock.get_requests()[0]
         body = json.loads(request.content)
         assert body["response_format"] == {"type": "json_object"}
@@ -164,17 +139,13 @@ class TestAnthropicLLMProvider:
             AnthropicLLMProvider(_cfg())
 
     def test_returns_text_from_content_blocks(self, httpx_mock):
-        httpx_mock.add_response(
-            json={"content": [{"type": "text", "text": "pong"}]}
-        )
+        httpx_mock.add_response(json={"content": [{"type": "text", "text": "pong"}]})
         result = self._provider().complete([{"role": "user", "content": "ping"}])
         assert result == "pong"
 
     def test_does_not_send_temperature_or_top_p(self, httpx_mock):
         """CRITICAL: Anthropic Opus 4.8/4.7 return 400 if temperature/top_p is sent."""
-        httpx_mock.add_response(
-            json={"content": [{"type": "text", "text": ""}]}
-        )
+        httpx_mock.add_response(json={"content": [{"type": "text", "text": ""}]})
         self._provider().complete([{"role": "user", "content": "hi"}])
         request = httpx_mock.get_requests()[0]
         body = json.loads(request.content)
@@ -182,21 +153,15 @@ class TestAnthropicLLMProvider:
         assert "top_p" not in body, "top_p must NOT be sent to Anthropic"
 
     def test_sends_adaptive_thinking(self, httpx_mock):
-        httpx_mock.add_response(
-            json={"content": [{"type": "text", "text": ""}]}
-        )
+        httpx_mock.add_response(json={"content": [{"type": "text", "text": ""}]})
         self._provider().complete([{"role": "user", "content": "hi"}])
         request = httpx_mock.get_requests()[0]
         body = json.loads(request.content)
         assert body["thinking"] == {"type": "adaptive"}
 
     def test_system_sent_as_top_level_field_not_in_messages(self, httpx_mock):
-        httpx_mock.add_response(
-            json={"content": [{"type": "text", "text": ""}]}
-        )
-        self._provider().complete(
-            [{"role": "user", "content": "hi"}], system="Be helpful"
-        )
+        httpx_mock.add_response(json={"content": [{"type": "text", "text": ""}]})
+        self._provider().complete([{"role": "user", "content": "hi"}], system="Be helpful")
         request = httpx_mock.get_requests()[0]
         body = json.loads(request.content)
         assert body.get("system") == "Be helpful"

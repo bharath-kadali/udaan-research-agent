@@ -4,6 +4,7 @@ bytes from an injected object store instead of receiving base64 over HTTP."""
 import json
 
 import pytest
+
 from udaan_parsing.chunking import Chunk
 from udaan_parsing.ingest import ingest_from_pointer
 from udaan_parsing.objstore import InMemoryObjectStore, parse_s3_pointer

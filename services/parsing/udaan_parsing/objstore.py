@@ -59,7 +59,7 @@ class S3ObjectStore:
         )
 
     @classmethod
-    def from_config(cls, s3) -> "S3ObjectStore":
+    def from_config(cls, s3) -> S3ObjectStore:
         return cls(
             endpoint=s3.endpoint,
             region=s3.region,

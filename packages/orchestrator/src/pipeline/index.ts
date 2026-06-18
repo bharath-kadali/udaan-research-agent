@@ -5,7 +5,7 @@ import { InMemoryQueryCache } from "../phases/query-orchestration/index.js";
 import { defaultAdapters } from "../phases/open-graph-gateway/index.js";
 import { S3ObjectStore } from "../phases/full-text-resolution/index.js";
 import { HttpParsingService, HttpRankingService, HttpSynthesisService } from "./clients.js";
-import type { PipelineDeps, ProgressEvent } from "./runPipeline.js";
+import type { PipelineDeps } from "./runPipeline.js";
 
 export * from "./clients.js";
 export { runPipeline, type PipelineDeps, type PipelineResult, type ProgressEvent } from "./runPipeline.js";

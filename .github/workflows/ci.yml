@@ -1,9 +1,7 @@
 name: CI
 
 # Merge gate: typecheck + tests for the TypeScript packages and pytest for the
-# three Python services. Runs on every PR to main and on pushes to main.
-# (Lint/format enforcement is wired separately in #27; this workflow owns the
-# typecheck + test gates.)
+# three Python services. Lint/format enforcement runs in the lint job (#27).
 
 on:
   pull_request:
@@ -20,6 +18,35 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    name: Lint & format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint + Prettier (TypeScript)
+        run: pnpm turbo run lint
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Ruff (Python)
+        run: pip install ruff && pnpm lint:python
+
   ts:
     name: TypeScript (typecheck + test)
     runs-on: ubuntu-latest

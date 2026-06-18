@@ -15,16 +15,24 @@ class StubLLM:
 
 
 def fake_parse(_data: bytes) -> list[Chunk]:
-    return [Chunk(text="Ephemeral caching reduced latency by 30% under load.", section="Results", page_number=3)]
+    return [
+        Chunk(text="Ephemeral caching reduced latency by 30% under load.", section="Results", page_number=3)
+    ]
 
 
 def test_ingest_attaches_embeddings_and_stores_claims():
     store = InMemoryClaimStore()
-    response = json.dumps({
-        "claims": [
-            {"claimText": "caching cut latency ~30%", "sourceQuote": "reduced latency by 30%", "claimClassification": "FINDING"}
-        ]
-    })
+    response = json.dumps(
+        {
+            "claims": [
+                {
+                    "claimText": "caching cut latency ~30%",
+                    "sourceQuote": "reduced latency by 30%",
+                    "claimClassification": "FINDING",
+                }
+            ]
+        }
+    )
 
     claims = ingest_document(
         b"%PDF-fake",

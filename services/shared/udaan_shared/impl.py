@@ -10,6 +10,7 @@
 
 All classes are defined before register_defaults() so lambdas can capture them.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -110,9 +111,7 @@ class GeminiLLMProvider:
     def __init__(self, config: Config) -> None:
         self._api_key = config.api_keys.get("gemini")
         if not self._api_key:
-            raise ValueError(
-                "GEMINI_API_KEY is not set. It is required when LLM_PROVIDER=gemini."
-            )
+            raise ValueError("GEMINI_API_KEY is not set. It is required when LLM_PROVIDER=gemini.")
         self._model = config.llm_model
 
     def complete(
@@ -151,12 +150,7 @@ class GeminiLLMProvider:
         resp = httpx.post(url, json=body, timeout=60.0)
         resp.raise_for_status()
         data = resp.json()
-        return (
-            data.get("candidates", [{}])[0]
-            .get("content", {})
-            .get("parts", [{}])[0]
-            .get("text", "")
-        )
+        return data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
 
 
 class GroqLLMProvider:
@@ -167,9 +161,7 @@ class GroqLLMProvider:
     def __init__(self, config: Config) -> None:
         self._api_key = config.api_keys.get("groq")
         if not self._api_key:
-            raise ValueError(
-                "GROQ_API_KEY is not set. It is required when LLM_PROVIDER=groq."
-            )
+            raise ValueError("GROQ_API_KEY is not set. It is required when LLM_PROVIDER=groq.")
         self._model = config.llm_model
 
     def complete(
@@ -214,9 +206,7 @@ class AnthropicLLMProvider:
     def __init__(self, config: Config) -> None:
         self._api_key = config.api_keys.get("anthropic")
         if not self._api_key:
-            raise ValueError(
-                "ANTHROPIC_API_KEY is not set. It is required when LLM_PROVIDER=anthropic."
-            )
+            raise ValueError("ANTHROPIC_API_KEY is not set. It is required when LLM_PROVIDER=anthropic.")
         self._model = config.llm_model
 
     def complete(
@@ -267,12 +257,11 @@ class AnthropicLLMProvider:
             for block in content:
                 if block.get("type") == "tool_use":
                     import json
+
                     return json.dumps(block.get("input", {}))
 
         # Return joined text blocks.
-        return "".join(
-            block.get("text", "") for block in content if block.get("type") == "text"
-        )
+        return "".join(block.get("text", "") for block in content if block.get("type") == "text")
 
 
 class CohereEmbeddingProvider:
@@ -281,9 +270,7 @@ class CohereEmbeddingProvider:
     def __init__(self, config: Config) -> None:
         self._api_key = config.api_keys.get("cohere")
         if not self._api_key:
-            raise ValueError(
-                "COHERE_API_KEY is not set. It is required when EMBEDDING_PROVIDER=cohere."
-            )
+            raise ValueError("COHERE_API_KEY is not set. It is required when EMBEDDING_PROVIDER=cohere.")
         self._model = "embed-english-v3.0"
 
     def embed(self, texts: list[str]) -> list[list[float]]:

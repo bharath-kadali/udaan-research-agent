@@ -18,10 +18,18 @@ def make(internal_id: str, title: str, abstract: str) -> CandidatePaper:
 
 
 def test_rerank_orders_by_relevance_and_builds_manifest():
-    relevant = make("a", "Micro-caching and tail latency", "micro caching reduces p99 tail latency in distributed stateful systems")
-    irrelevant = make("b", "Cooking", "a long unrelated abstract about medieval cooking techniques and recipes")
+    relevant = make(
+        "a",
+        "Micro-caching and tail latency",
+        "micro caching reduces p99 tail latency in distributed stateful systems",
+    )
+    irrelevant = make(
+        "b", "Cooking", "a long unrelated abstract about medieval cooking techniques and recipes"
+    )
 
-    index = rerank_candidates("micro caching tail latency", [irrelevant, relevant], LexicalReranker(), "proj_1")
+    index = rerank_candidates(
+        "micro caching tail latency", [irrelevant, relevant], LexicalReranker(), "proj_1"
+    )
 
     assert index.project_id == "proj_1"
     assert index.total_processed == 2

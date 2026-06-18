@@ -33,6 +33,7 @@ def deterministic_claim_id(
     key = "\x1f".join([project_id, document_doi or "", classification, source_quote, claim_text])
     return f"cl_{uuid.uuid5(_CLAIM_NAMESPACE, key).hex}"
 
+
 EXTRACTION_SYSTEM = (
     "You are a strict claim extractor for scientific text. From the passage, "
     "extract discrete factual propositions. For each, return: claimText (a concise "

@@ -39,7 +39,9 @@ def _parse_docling(data: bytes) -> list[Chunk]:
         if not text:
             continue
         label = str(getattr(item, "label", "")).lower()
-        page = int(getattr(getattr(item, "prov", [{}])[0], "page_no", 1)) if getattr(item, "prov", None) else 1
+        page = (
+            int(getattr(getattr(item, "prov", [{}])[0], "page_no", 1)) if getattr(item, "prov", None) else 1
+        )
         if "title" in label or "section" in label or "header" in label:
             section = text
             continue

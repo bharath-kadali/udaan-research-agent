@@ -18,16 +18,26 @@ def test_quote_anchor_drops_unverifiable_and_invalid_claims():
         section="Results",
         page_number=6,
     )
-    response = json.dumps({
-        "claims": [
-            # valid: quote is a verbatim substring
-            {"claimText": "Micro-caching cut p99 latency ~40%", "sourceQuote": "reduced p99 latency by 40%", "claimClassification": "FINDING"},
-            # dropped: quote not present in the chunk (hallucinated)
-            {"claimText": "fabricated", "sourceQuote": "this sentence is not in the passage", "claimClassification": "FINDING"},
-            # dropped: invalid classification
-            {"claimText": "bad class", "sourceQuote": "Micro-caching", "claimClassification": "OPINION"},
-        ]
-    })
+    response = json.dumps(
+        {
+            "claims": [
+                # valid: quote is a verbatim substring
+                {
+                    "claimText": "Micro-caching cut p99 latency ~40%",
+                    "sourceQuote": "reduced p99 latency by 40%",
+                    "claimClassification": "FINDING",
+                },
+                # dropped: quote not present in the chunk (hallucinated)
+                {
+                    "claimText": "fabricated",
+                    "sourceQuote": "this sentence is not in the passage",
+                    "claimClassification": "FINDING",
+                },
+                # dropped: invalid classification
+                {"claimText": "bad class", "sourceQuote": "Micro-caching", "claimClassification": "OPINION"},
+            ]
+        }
+    )
 
     claims = extract_claims(chunk, "proj_1", "10.1/x", StubLLM(response))
 

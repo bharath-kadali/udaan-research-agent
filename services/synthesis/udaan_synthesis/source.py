@@ -17,10 +17,7 @@ class InMemoryClaimSource:
         self._claims = claims
 
     def fetch_findings(self, project_id: str) -> list[ValidatedClaim]:
-        return [
-            c for c in self._claims
-            if c.project_id == project_id and c.claim_classification == "FINDING"
-        ]
+        return [c for c in self._claims if c.project_id == project_id and c.claim_classification == "FINDING"]
 
 
 class QdrantClaimSource:

@@ -58,7 +58,7 @@ def ingest_document(
 
     if claims:
         vectors = embed.embed([c.claim_text for c in claims])
-        for claim, vector in zip(claims, vectors):
+        for claim, vector in zip(claims, vectors, strict=True):
             claim.vector_embedding = [float(x) for x in vector]
         store.upsert(claims)
 

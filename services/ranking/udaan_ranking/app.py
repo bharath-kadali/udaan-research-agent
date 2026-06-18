@@ -7,6 +7,7 @@ import logging
 
 from fastapi import FastAPI
 from pydantic import BaseModel, ConfigDict, Field
+
 from udaan_contracts import CandidatePaper
 from udaan_shared import create_rerank_provider, load_config
 
@@ -62,7 +63,5 @@ def health() -> dict:
 
 @app.post("/rerank")
 def rerank(req: RerankRequest) -> dict:
-    result = rerank_candidates(
-        req.original_query, req.candidate_papers, get_reranker(), req.project_id
-    )
+    result = rerank_candidates(req.original_query, req.candidate_papers, get_reranker(), req.project_id)
     return result.model_dump(by_alias=True)

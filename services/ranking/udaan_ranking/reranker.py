@@ -74,12 +74,14 @@ class CohereReranker:
             return []
         if not self._key:
             raise RuntimeError("COHERE_API_KEY not set")
-        payload = json.dumps({
-            "model": self._model,
-            "query": query,
-            "documents": documents,
-            "top_n": len(documents),
-        }).encode("utf-8")
+        payload = json.dumps(
+            {
+                "model": self._model,
+                "query": query,
+                "documents": documents,
+                "top_n": len(documents),
+            }
+        ).encode("utf-8")
         req = urllib.request.Request(
             "https://api.cohere.com/v2/rerank",
             data=payload,

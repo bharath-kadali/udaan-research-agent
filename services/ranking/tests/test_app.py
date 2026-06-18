@@ -60,7 +60,9 @@ def test_rerank_endpoint_returns_camelcase_manifest(client):
         "originalQuery": "micro caching tail latency",
         "candidatePapers": [
             _candidate("b", "Cooking", "a long unrelated abstract about medieval cooking techniques today"),
-            _candidate("a", "Micro-caching latency", "micro caching reduces p99 tail latency in distributed systems"),
+            _candidate(
+                "a", "Micro-caching latency", "micro caching reduces p99 tail latency in distributed systems"
+            ),
         ],
     }
     res = client.post("/rerank", json=payload)

@@ -30,8 +30,28 @@ POLARITY_SCHEMA = {
 }
 
 _STOPWORDS = {
-    "the", "a", "an", "of", "in", "on", "for", "to", "and", "or", "with", "by",
-    "is", "are", "was", "were", "under", "this", "that", "we", "our", "results",
+    "the",
+    "a",
+    "an",
+    "of",
+    "in",
+    "on",
+    "for",
+    "to",
+    "and",
+    "or",
+    "with",
+    "by",
+    "is",
+    "are",
+    "was",
+    "were",
+    "under",
+    "this",
+    "that",
+    "we",
+    "our",
+    "results",
 }
 
 

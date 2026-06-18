@@ -7,6 +7,7 @@ import logging
 
 from fastapi import FastAPI
 from pydantic import BaseModel, ConfigDict, Field
+
 from udaan_shared import create_llm_provider, load_config, register_defaults
 
 from .clustering import cluster_quality
@@ -29,6 +30,7 @@ def stage_quality() -> list[dict]:
         _log.warning("Synthesis is running a DEGRADED fallback clusterer: %s", implementation)
         _quality_logged = True
     return [{"stage": "clustering", "implementation": implementation, "degraded": degraded}]
+
 
 _llm = None
 _source: ClaimSource | None = None
