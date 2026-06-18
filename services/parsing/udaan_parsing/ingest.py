@@ -10,6 +10,28 @@ from udaan_contracts import ValidatedClaim
 
 from .chunking import Chunk
 from .extract import extract_claims
+from .objstore import ObjectStore
+
+
+def ingest_from_pointer(
+    storage_pointer: str,
+    document_doi: str | None,
+    project_id: str,
+    *,
+    object_store: ObjectStore,
+    parse: Callable[[bytes], list[Chunk]],
+    llm,
+    embed,
+    store,
+) -> list[ValidatedClaim]:
+    """Phase 5 entry that streams the PDF from the vault by pointer (issue #24)
+    rather than accepting base64 bytes over HTTP."""
+    pdf_bytes = object_store.get(storage_pointer)
+    if pdf_bytes is None:
+        raise FileNotFoundError(f"no object at storage pointer: {storage_pointer}")
+    return ingest_document(
+        pdf_bytes, document_doi, project_id, parse=parse, llm=llm, embed=embed, store=store
+    )
 
 
 def ingest_document(
